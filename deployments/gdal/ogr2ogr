@@ -1,0 +1,10 @@
+#! /bin/bash
+die () {
+    echo >&2 "$@"
+    exit 1
+}
+
+[ "$#" -eq 1 ] || [ "$#" -eq 2 ] || die "1 argument required, $# provided"
+
+echo "Loading file: /geoia/data/$1 $([[ "$#" -eq 2 ]] && echo "(into $2)")"
+ogr2ogr -progress -preserve_fid -overwrite  -f "PostgreSQL" PG:"host=${PG_HOST} port=${PG_PORT} user='${PG_USER}' password='${PG_PASSWORD}' dbname='${PG_DATABASE}' active_schema=shapefiles" -nlt POLYGON $([[ "$#" -eq 2 ]] && echo "-nln $2") /geoia/data/$1 

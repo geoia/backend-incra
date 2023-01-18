@@ -1,0 +1,74 @@
+openapi: 3.0.1
+info:
+  title: geoia-backend
+  description: GeoIA Backend Server
+  version: 0.1.0
+servers:
+  - url: /api/v1
+tags:
+  - name: Queimadas
+    description: API para consulta de dados de queimadas
+  - name: Specification
+    description: The swagger API specification
+paths:
+  /queimadas/municipio/{id}:
+    get:
+      tags:
+        - Queimadas
+      parameters:
+        - $ref: '#/components/parameters/municipio_id'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/simplify'
+      responses:
+        200:
+          description: Retorna dados de queimadas do municipio no formato GeoJson
+  /queimadas/estado/{id}:
+    get:
+      tags:
+        - Queimadas
+      parameters:
+        - $ref: '#/components/parameters/estado_id'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/simplify'
+      responses:
+        200:
+          description: Retorna dados de queimadas do estado no formato GeoJson
+  /spec:
+    get:
+      tags:
+        - Specification
+      responses:
+        200:
+          description: Return the API specification
+          content: {}
+components:
+  parameters:
+    municipio_id:
+      in: path
+      name: id
+      schema:
+        type: integer
+        example: 5003207
+      required: true
+    estado_id:
+      in: path
+      name: id
+      schema:
+        type: integer
+        example: 50
+      required: true
+    page:
+      in: query
+      name: page
+      schema:
+        type: number
+        minimum: 1
+        default: 1
+      required: false
+    simplify:
+      in: query
+      name: simplify
+      schema:
+        enum: [y, n]
+        default: y
+      required: false

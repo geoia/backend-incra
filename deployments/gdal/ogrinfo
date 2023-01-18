@@ -1,0 +1,2 @@
+#! /bin/bash
+ogrinfo PG:"host=${PG_HOST} port=${PG_PORT} user='${PG_USER}' password='${PG_PASSWORD}' dbname='${PG_DATABASE}'"

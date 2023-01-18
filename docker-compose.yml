@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  postgis:
+    build:
+      context: deployments/postgis
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - ${PG_PORT:-5432}:5432
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-geoia}
+      POSTGRES_USER: ${PG_USER:-geoia}
+      POSTGRES_DB: ${PG_DATABASE:-geoia-db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  gdal:
+    build:
+      context: deployments/gdal
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PG_HOST: postgis
+      PG_PORT: 5432
+      PG_PASSWORD: ${PG_PASSWORD:-geoia}
+      PG_USER: ${PG_USER:-geoia}
+      PG_DATABASE: ${PG_DATABASE:-geoia-db}
+    volumes:
+      - ./shapefiles:/geoia/data
+    depends_on:
+      - postgis
+
+volumes:
+  pgdata:
