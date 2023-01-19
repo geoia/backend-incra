@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@turf/turf": "^6.5.0",
+    "apicache": "^1.6.3",
     "axios": "^1.2.3",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.2",
@@ -37,6 +38,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.4.2",
     "@commitlint/config-conventional": "^17.4.2",
+    "@types/apicache": "^1.6.1",
     "@types/bluebird": "^3.5.38",
     "@types/chai": "^4.3.0",
     "@types/compression": "^1.7.2",
