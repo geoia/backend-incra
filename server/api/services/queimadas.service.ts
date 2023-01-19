@@ -3,7 +3,8 @@ import knex from '../../common/knex';
 import type { Polygon, Feature, MultiPolygon } from '@turf/turf';
 import { simplify as simplifyFn, polygon } from '@turf/turf';
 import { isNil, negate } from 'lodash';
-import { union } from '../../common/polygons';
+import { union } from '../../common/utils/polygons';
+import formatter from '../../common/utils/formatter';
 
 const isNotNil = negate(isNil);
 
@@ -22,7 +23,10 @@ async function get(opts: HandlerOpts): Promise<Feature<Polygon | MultiPolygon> |
   const limit = 1000;
   const offset = Math.max(parseInt((page || '1').toString()), 1) * 1000;
 
-  L.debug('Obtendo dados de queimadas usando mapa "%s" e id "%s"...', mapa, id);
+  L.debug(
+    'Obtendo dados de queimadas usando "%s"...',
+    formatter.object({ mapa, id, simplify, page })
+  );
   const { rowCount, rows } = await knex.raw(
     `
     SELECT ST_AsGeoJSON(ST_Transform(sm.geom, 4326), 6) AS GeoJSON
