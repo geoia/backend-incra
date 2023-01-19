@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
-  title: geoia-backend
-  description: GeoIA Backend Server
+  title: GeoIA Backend
+  description: API que descreve as APIs oferecidas pelo serviço
   version: 0.1.0
 servers:
   - url: /api/v1
