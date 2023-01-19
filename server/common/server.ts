@@ -6,6 +6,7 @@ import os from 'os';
 import cookieParser from 'cookie-parser';
 import l from './logger';
 import compression from 'compression';
+import helmet from 'helmet';
 
 import errorHandler from '../api/middlewares/error.handler';
 import * as OpenApiValidator from 'express-openapi-validator';
@@ -18,6 +19,7 @@ export default class ExpressServer {
     const root = path.normalize(__dirname + '/../..');
     app.use(bodyParser.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
     app.use(compression());
+    app.use(helmet.hidePoweredBy());
     app.use(
       bodyParser.urlencoded({
         extended: true,

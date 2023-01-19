@@ -1,29 +1,48 @@
 import { Request, Response } from 'express';
-import queimadas from '../../services/queimadas.service';
+import { queimadas, count } from '../../services/queimadas.service';
 
-export default {
-  municipio: async (req: Request, res: Response) => {
-    const { municipio } = req.params;
-    const { page, simplify } = req.query;
+async function get(req: Request, res: Response) {
+  const criteria = req.params.municipio
+    ? { municipio: parseInt(req.params.municipio) }
+    : { estado: parseInt(req.params.estado) };
 
-    const result = await queimadas.municipio({
-      municipio: parseInt(municipio),
-      page: parseInt((page || '1').toString()),
-      simplify: simplify?.toString().toLocaleLowerCase() === 'y',
-    });
+  const queimadasCount = await count(criteria);
 
-    res.status(200).send(result);
-  },
-  estado: async (req: Request, res: Response) => {
-    const { estado } = req.params;
-    const { page, simplify } = req.query;
+  const page = parseInt((req.query.page || '1').toString());
+  const perPage = parseInt((req.query.per_page || '100').toString());
 
-    const result = await queimadas.estado({
-      estado: parseInt(estado),
-      page: parseInt((page || '1').toString()),
-      simplify: simplify?.toString().toLocaleLowerCase() === 'y',
-    });
+  const result = await queimadas({
+    ...criteria,
+    limit: perPage,
+    page: page,
+    detailed: req.query.detailed?.toString().toLowerCase() === 'true',
+  });
 
-    res.status(200).send(result);
-  },
-};
+  const lastPage = Math.ceil(queimadasCount / perPage);
+
+  let partialResponse = res
+    .status(result ? 200 : 204)
+    .setHeader('x-queimadas-count', queimadasCount);
+
+  if (queimadasCount > 0) {
+    partialResponse = partialResponse
+      .setHeader('x-queimadas-pages-current', page)
+      .setHeader('x-queimadas-pages-first', 1)
+      .setHeader('x-queimadas-pages-last', lastPage);
+
+    if (page > 1) {
+      partialResponse = partialResponse.setHeader(
+        'x-queimadas-pages-previous',
+        Math.min(page - 1, lastPage)
+      );
+    }
+
+    if (lastPage > page) {
+      partialResponse = partialResponse.setHeader('x-queimadas-pages-next', page + 1);
+    }
+  }
+
+  return partialResponse.send(result);
+}
+
+export default { get };
