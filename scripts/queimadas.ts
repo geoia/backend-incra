@@ -109,6 +109,10 @@ async function main() {
           .withSchema('public')
           .raw(`CREATE TABLE ${data.table} AS TABLE shapefiles."${data.dirname}"`);
 
+        await trx.schema
+          .withSchema('public')
+          .raw(`CREATE INDEX geom_idx ON ${data.table} USING gist (wkb_geometry)`);
+
         await updateHistory({ date: data.date, dirname: data.dirname }, trx);
       });
     }
