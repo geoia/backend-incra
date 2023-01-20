@@ -2,12 +2,12 @@ import knex from '../server/common/knex';
 import glob from 'glob';
 import { resolve, sep } from 'path';
 import { execSync } from 'child_process';
-import { mapSeries } from 'bluebird';
+import { each } from 'bluebird';
 import consola from 'consola';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
 import { orderBy } from 'lodash';
-import logScript from './logs';
+import { Knex } from 'knex';
 
 dayjs.extend(utcPlugin);
 
@@ -21,12 +21,33 @@ type ShapefileData = {
   name: string;
 };
 
+async function updateHistory(data: { date: Date; dirname: string }, trx?: Knex.Transaction) {
+  const conn = trx || knex;
+
+  consola.debug('Verificando existência da tabela de metadados...');
+  const hasTable = await conn.schema.withSchema('public').hasTable('mapas_queimadas_historico');
+
+  if (!hasTable) {
+    await conn.schema.withSchema('public').createTable('mapas_queimadas_historico', (table) => {
+      table.string('suffix').checkRegex('[0-9]{8}').primary();
+      table.date('date');
+      table.string('dirname');
+      table.dateTime('created_at').defaultTo(conn.fn.now());
+    });
+  }
+
+  return conn
+    .withSchema('public')
+    .insert({ ...data, suffix: dayjs.utc(data.date).format('YYYYMMDD') })
+    .into('mapas_queimadas_historico');
+}
+
 // Função para identificar shapefiles disponíveis
 function filesList(): ShapefileData[] {
   // le todos os diretorios em queimadas
   const localDirs = glob.sync('*', { cwd: SHAPEFILES_DIR });
 
-  return localDirs
+  const data = localDirs
     .map((dirname) => {
       // verifica se o diretório segue o padrão de nome definido
       if (!/^\d{8}_.+$/g.test(dirname)) return;
@@ -48,6 +69,8 @@ function filesList(): ShapefileData[] {
       };
     })
     .filter((data) => data !== undefined) as ShapefileData[];
+
+  return data.sort((a, b) => a.date.getUTCDate() - b.date.getUTCDate());
 }
 
 // Função que processa o shapefile
@@ -65,7 +88,7 @@ async function main() {
   }));
 
   // processa shapefiles armazenados no diretório
-  await mapSeries(shapefiles, async (data) => {
+  await each(shapefiles, async (data) => {
     consola.info(`Iniciando processamento de ${data.dirname}...`);
 
     consola.info('Verificando existência de dados antigos...');
@@ -86,15 +109,7 @@ async function main() {
           .withSchema('public')
           .raw(`CREATE TABLE ${data.table} AS TABLE shapefiles."${data.dirname}"`);
 
-        await logScript(
-          {
-            type: 'queimadas',
-            dirname: data.dirname,
-            shapefile: data.shapefile,
-            path: data.path,
-          },
-          trx
-        );
+        await updateHistory({ date: data.date, dirname: data.dirname }, trx);
       });
     }
 
