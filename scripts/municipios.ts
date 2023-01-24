@@ -87,7 +87,7 @@ export async function populateDadosMunicipios() {
 
 async function populateMapasMunicipios() {
   consola.info('Carregando shapefiles do ibge no banco de dados...');
-  const command = 'docker compose run --rm gdal ./ogr2ogr';
+  const command = 'docker compose run --rm gdal sh ogr2ogr';
   await Promise.all([
     execAsync(`${command} mapas/BR_Municipios_2021/BR_Municipios_2021.shp`),
     execAsync(`${command} mapas/BR_UF_2021/BR_UF_2021.shp`),

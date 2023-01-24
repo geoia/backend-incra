@@ -19,4 +19,4 @@ COPY --chown=geoia ogr2ogr ogrinfo ./
 RUN chmod -R +x .
 
 # Por padrão testa a conexao
-CMD ./ogrinfo
+CMD sh ogrinfo

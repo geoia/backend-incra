@@ -75,7 +75,7 @@ function filesList(): ShapefileData[] {
 
 // Função que processa o shapefile
 async function processShapefile(path: string, tableDestination?: string) {
-  execSync(`docker compose run --rm gdal ./ogr2ogr queimadas/${path} ${tableDestination || ''}`, {
+  execSync(`docker compose run --rm gdal sh ogr2ogr queimadas/${path} ${tableDestination || ''}`, {
     stdio: 'inherit',
   });
 }
