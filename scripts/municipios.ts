@@ -1,11 +1,8 @@
-import { exec } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import knex from '../server/common/knex';
 import consola from 'consola';
 import axios from 'axios';
 import { each, mapSeries } from 'bluebird';
-import { promisify } from 'node:util';
-
-const execAsync = promisify(exec);
 
 interface MunicipiosIBGE {
   'municipio-id': number;
@@ -88,10 +85,9 @@ export async function populateDadosMunicipios() {
 async function populateMapasMunicipios() {
   consola.info('Carregando shapefiles do ibge no banco de dados...');
   const command = 'docker compose run --rm gdal sh ogr2ogr';
-  await Promise.all([
-    execAsync(`${command} mapas/BR_Municipios_2021/BR_Municipios_2021.shp`),
-    execAsync(`${command} mapas/BR_UF_2021/BR_UF_2021.shp`),
-  ]);
+
+  execSync(`${command} mapas/BR_Municipios_2021/BR_Municipios_2021.shp`, { stdio: 'inherit' });
+  execSync(`${command} mapas/BR_UF_2021/BR_UF_2021.shp`, { stdio: 'inherit' });
 
   await knex.transaction(async (trx) => {
     consola.info('Removendo dados antigos...');
