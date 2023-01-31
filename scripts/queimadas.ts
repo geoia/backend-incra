@@ -1,11 +1,10 @@
 import knex from '../server/common/knex';
 import glob from 'glob';
-import { join, resolve, sep } from 'path';
+import { join, resolve } from 'path';
 import { each } from 'bluebird';
 import consola from 'consola';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
-import { orderBy } from 'lodash';
 import { Knex } from 'knex';
 import ogr2ogr from './ogr2ogr';
 
@@ -17,11 +16,11 @@ type ShapefileData = {
   dirname: string;
   shapefile: string;
   path: string;
-  date: Date;
+  prefix: string;
   name: string;
 };
 
-async function updateHistory(data: { date: Date; dirname: string }, trx?: Knex.Transaction) {
+async function updateHistory({ prefix, dirname }: ShapefileData, trx?: Knex.Transaction) {
   const conn = trx || knex;
 
   consola.debug('Verificando existência da tabela de metadados...');
@@ -29,8 +28,9 @@ async function updateHistory(data: { date: Date; dirname: string }, trx?: Knex.T
 
   if (!hasTable) {
     await conn.schema.withSchema('public').createTable('mapas_queimadas_historico', (table) => {
-      table.string('suffix').checkRegex('[0-9]{8}').primary();
-      table.date('date');
+      table.string('prefix').checkRegex('[0-9]{6}').primary();
+      table.integer('year').unsigned();
+      table.integer('month').unsigned();
       table.string('dirname');
       table.dateTime('created_at').defaultTo(conn.fn.now());
     });
@@ -38,7 +38,12 @@ async function updateHistory(data: { date: Date; dirname: string }, trx?: Knex.T
 
   return conn
     .withSchema('public')
-    .insert({ ...data, suffix: dayjs.utc(data.date).format('YYYYMMDD') })
+    .insert({
+      prefix,
+      year: parseInt(prefix.slice(0, 4)),
+      month: parseInt(prefix.slice(4, 6)),
+      dirname,
+    })
     .into('mapas_queimadas_historico');
 }
 
@@ -46,11 +51,12 @@ async function updateHistory(data: { date: Date; dirname: string }, trx?: Knex.T
 function filesList(): ShapefileData[] {
   // le todos os diretorios em queimadas
   const localDirs = glob.sync('*', { cwd: SHAPEFILES_DIR });
+  const regex = /^(\d{4})(\d{2})_(.+)$/i;
 
   const data = localDirs
     .map((dirname) => {
       // verifica se o diretório segue o padrão de nome definido
-      if (!/^\d{8}_.+$/g.test(dirname)) return;
+      if (!regex.test(dirname)) return;
 
       //verificar se existem um arquivo .shp no diretório
       const [shapefile] = glob.sync('*.shp', {
@@ -59,26 +65,27 @@ function filesList(): ShapefileData[] {
       if (!shapefile) return;
 
       // retorna dados preparados
-      const [, year, month, day, name] = /^(\d{4})(\d{2})(\d{2})_(.+)$/g.exec(dirname) || [];
+
+      const [, year, month, name] = dirname.match(regex) || [];
+      console.log(year, month, name, dirname.match(regex));
       return {
         dirname,
         shapefile,
-        path: `${dirname}${sep}${shapefile}`,
-        date: new Date(`${year}-${month}-${day}T00:00:00Z`),
+        path: join(dirname, shapefile),
+        prefix: `${year}${month}`,
         name: name.trim(),
       };
     })
     .filter((data) => data !== undefined) as ShapefileData[];
 
-  return data.sort((a, b) => a.date.getUTCDate() - b.date.getUTCDate());
+  return data.sort((a, b) => a.prefix.localeCompare(b.prefix));
 }
 
 async function main() {
   // obtem lista de shapefiles disponíveis
-  const shapefiles = orderBy(filesList(), ['date'], ['asc']).map((data) => ({
-    ...data,
-    table: `mapas_queimadas_${dayjs.utc(data.date).format('YYYYMMDD')}`,
-  }));
+  const shapefiles = filesList().map((data) =>
+    Object.assign({ table: `mapas_queimadas_${data.prefix}` }, data)
+  );
 
   // processa shapefiles armazenados no diretório
   await each(shapefiles, async (data) => {
@@ -106,7 +113,7 @@ async function main() {
           .withSchema('public')
           .raw(`CREATE INDEX IF NOT EXISTS geom_idx ON ${data.table} USING gist (wkb_geometry)`);
 
-        await updateHistory({ date: data.date, dirname: data.dirname }, trx);
+        await updateHistory(data, trx);
       });
     }
 
