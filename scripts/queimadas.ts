@@ -51,7 +51,7 @@ async function updateHistory({ prefix, dirname }: ShapefileData, trx?: Knex.Tran
 function filesList(): ShapefileData[] {
   // le todos os diretorios em queimadas
   const localDirs = glob.sync('*', { cwd: SHAPEFILES_DIR });
-  const regex = /^(\d{4})(\d{2})_(.+)$/i;
+  const regex = /^(\d{4})(\d{2})(_.*){0,1}$/i;
 
   const data = localDirs
     .map((dirname) => {
@@ -67,13 +67,13 @@ function filesList(): ShapefileData[] {
       // retorna dados preparados
 
       const [, year, month, name] = dirname.match(regex) || [];
-      console.log(year, month, name, dirname.match(regex));
+
       return {
         dirname,
         shapefile,
         path: join(dirname, shapefile),
         prefix: `${year}${month}`,
-        name: name.trim(),
+        name: (name || '').slice(1).trim(),
       };
     })
     .filter((data) => data !== undefined) as ShapefileData[];
@@ -84,7 +84,10 @@ function filesList(): ShapefileData[] {
 async function main() {
   // obtem lista de shapefiles disponíveis
   const shapefiles = filesList().map((data) =>
-    Object.assign({ table: `mapas_queimadas_${data.prefix}` }, data)
+    Object.assign(
+      { table: `mapas_queimadas_${data.prefix}`, tmpTable: `shapefiles_queimadas_${data.prefix}` },
+      data
+    )
   );
 
   // processa shapefiles armazenados no diretório
@@ -92,11 +95,11 @@ async function main() {
     consola.info(`Iniciando processamento de ${data.dirname}...`);
 
     consola.info('Verificando existência de dados antigos...');
-    const hasTable = await knex.schema.withSchema('shapefiles').hasTable(data.dirname);
+    const hasTable = await knex.schema.withSchema('shapefiles').hasTable(data.tmpTable);
 
     if (!hasTable) {
       consola.info('Processando shapefile...');
-      ogr2ogr(join('queimadas', data.path), data.dirname);
+      ogr2ogr(join('queimadas', data.path), data.tmpTable);
     }
 
     consola.info('Verificando existência de dados antigos em "public"...');
@@ -107,7 +110,7 @@ async function main() {
       await knex.transaction(async (trx) => {
         await trx.schema
           .withSchema('public')
-          .raw(`CREATE TABLE ${data.table} AS TABLE shapefiles."${data.dirname}"`);
+          .raw(`CREATE TABLE ${data.table} AS TABLE shapefiles."${data.tmpTable}"`);
 
         await trx.schema
           .withSchema('public')
