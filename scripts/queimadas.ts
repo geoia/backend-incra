@@ -1,13 +1,13 @@
 import knex from '../server/common/knex';
 import glob from 'glob';
-import { resolve, sep } from 'path';
-import { execSync } from 'child_process';
+import { join, resolve, sep } from 'path';
 import { each } from 'bluebird';
 import consola from 'consola';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
 import { orderBy } from 'lodash';
 import { Knex } from 'knex';
+import ogr2ogr from './ogr2ogr';
 
 dayjs.extend(utcPlugin);
 
@@ -73,13 +73,6 @@ function filesList(): ShapefileData[] {
   return data.sort((a, b) => a.date.getUTCDate() - b.date.getUTCDate());
 }
 
-// Função que processa o shapefile
-async function processShapefile(path: string, tableDestination?: string) {
-  execSync(`docker compose run --rm gdal sh ogr2ogr queimadas/${path} ${tableDestination || ''}`, {
-    stdio: 'inherit',
-  });
-}
-
 async function main() {
   // obtem lista de shapefiles disponíveis
   const shapefiles = orderBy(filesList(), ['date'], ['asc']).map((data) => ({
@@ -96,7 +89,7 @@ async function main() {
 
     if (!hasTable) {
       consola.info('Processando shapefile...');
-      await processShapefile(data.path, data.dirname);
+      ogr2ogr(join('queimadas', data.path), data.dirname);
     }
 
     consola.info('Verificando existência de dados antigos em "public"...');
@@ -111,7 +104,7 @@ async function main() {
 
         await trx.schema
           .withSchema('public')
-          .raw(`CREATE INDEX geom_idx ON ${data.table} USING gist (wkb_geometry)`);
+          .raw(`CREATE INDEX IF NOT EXISTS geom_idx ON ${data.table} USING gist (wkb_geometry)`);
 
         await updateHistory({ date: data.date, dirname: data.dirname }, trx);
       });

@@ -2,8 +2,8 @@ import knex from '../server/common/knex';
 import consola from 'consola';
 import axios from 'axios';
 import { each, mapSeries } from 'bluebird';
-import { join, resolve } from 'node:path';
-import { execSync } from 'node:child_process';
+import { join } from 'node:path';
+import ogr2ogr from './ogr2ogr';
 
 interface MunicipiosIBGE {
   'municipio-id': number;
@@ -83,30 +83,10 @@ export async function populateDadosMunicipios() {
   consola.success('Dados dos municipios inseridos!');
 }
 
-function execOnLocal(path: string) {
-  const mapasDir = resolve(__dirname, '..', 'shapefiles', 'mapas');
-  const { PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE } = process.env;
-
-  const filePath = resolve(mapasDir, path);
-  const connStr = `PG:"host=${PG_HOST} port=${PG_PORT} user=${PG_USER} password=${PG_PASSWORD} dbname=${PG_DATABASE} active_schema=shapefiles"`;
-
-  execSync(
-    `ogr2ogr -progress -preserve_fid -overwrite -nlt POLYGON -f PostgreSQL ${connStr} ${filePath}`,
-    { stdio: 'inherit' }
-  );
-}
-
-function execOnDocker(path: string) {
-  const command = 'docker compose run --rm gdal sh ogr2ogr';
-  execSync(`${command} mapas/${path}`, { stdio: 'inherit' });
-}
-
 async function populateMapasMunicipios() {
-  const ogr2ogr = process.env.GDAL === 'local' ? execOnLocal : execOnDocker;
-
   consola.info('Carregando shapefiles do ibge no banco de dados...');
-  ogr2ogr(join('BR_Municipios_2021', 'BR_Municipios_2021.shp'));
-  ogr2ogr(join('BR_UF_2021', 'BR_UF_2021.shp'));
+  ogr2ogr(join('mapas', 'BR_Municipios_2021', 'BR_Municipios_2021.shp'));
+  ogr2ogr(join('mapas', 'BR_UF_2021', 'BR_UF_2021.shp'));
 
   await knex.transaction(async (trx) => {
     consola.info('Removendo dados antigos...');
@@ -140,7 +120,7 @@ async function populateMapasMunicipios() {
 }
 
 async function main() {
-  return each([populateMapasMunicipios], (func) => func()).then(() =>
+  return each([populateDadosMunicipios, populateMapasMunicipios], (func) => func()).then(() =>
     consola.success('Processo concluído com sucesso!')
   );
 }
