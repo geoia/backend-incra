@@ -17,8 +17,7 @@ function local(path: string, table?: string) {
 
 function docker(path: string, table?: string) {
   const command = 'docker compose run --rm gdal sh ogr2ogr';
-  const tableCmd = table ? `-nln "${table}"` : '';
-  execSync(`${command} "${path}" ${tableCmd}`, { stdio: 'inherit' });
+  execSync(`${command} "${path}" ${table || ''}`, { stdio: 'inherit' });
 }
 
 export default process.env.GDAL === 'local' ? local : docker;
