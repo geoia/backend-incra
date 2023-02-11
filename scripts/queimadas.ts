@@ -5,10 +5,14 @@ import { each } from 'bluebird';
 import consola from 'consola';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { Knex } from 'knex';
 import ogr2ogr from './ogr2ogr';
+import { CronJob } from 'cron';
+import { Option, program } from 'commander';
 
 dayjs.extend(utcPlugin);
+dayjs.extend(relativeTime);
 
 const SHAPEFILES_DIR = resolve(__dirname, '..', 'shapefiles', 'queimadas');
 
@@ -81,7 +85,7 @@ function filesList(): ShapefileData[] {
   return data.sort((a, b) => a.prefix.localeCompare(b.prefix));
 }
 
-async function main() {
+export async function exec() {
   // obtem lista de shapefiles disponíveis
   const shapefiles = filesList().map((data) =>
     Object.assign(
@@ -99,7 +103,7 @@ async function main() {
 
     if (!hasTable) {
       consola.info('Processando shapefile...');
-      ogr2ogr(join('queimadas', data.path), data.tmpTable);
+      await ogr2ogr(join('queimadas', data.path), data.tmpTable);
     }
 
     consola.info('Verificando existência de dados antigos em "public"...');
@@ -132,4 +136,29 @@ async function main() {
   consola.success('Processo finalizado com sucesso!');
 }
 
-if (require.main === module) main().then(() => knex.destroy());
+export function cronExec(cronTime: string) {
+  const { timeZone } = Intl.DateTimeFormat().resolvedOptions();
+  const job = new CronJob(cronTime, exec, null, true, timeZone);
+
+  const logNextDate = () => {
+    const nextDate = job.nextDate().toJSDate();
+    const dateStr = nextDate.toISOString();
+    const fromNow = dayjs(nextDate).fromNow();
+    consola.log(`\n=== Proxima atualização ${dateStr} (${fromNow}) ===\n`);
+  };
+
+  job.fireOnTick = () => exec().then(logNextDate);
+  job.fireOnTick();
+
+  return job;
+}
+
+if (require.main === module) {
+  program
+    .addOption(new Option('--cron [value]', 'The time to fire off the update in the cron syntax'))
+    .action(async (opts: { cron?: string }) => {
+      if (opts.cron) cronExec(opts.cron);
+      else await exec().then(() => knex.destroy());
+    })
+    .parseAsync(process.argv);
+}
