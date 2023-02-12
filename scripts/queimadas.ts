@@ -18,8 +18,7 @@ const SHAPEFILES_DIR = resolve(__dirname, '..', 'shapefiles', 'queimadas');
 
 type ShapefileData = {
   dirname: string;
-  shapefile: string;
-  path: string;
+  shapefiles: string[];
   prefix: string;
   name: string;
 };
@@ -63,22 +62,17 @@ function filesList(): ShapefileData[] {
       if (!regex.test(dirname)) return;
 
       //verificar se existem um arquivo .shp no diretório
-      const [shapefile] = glob.sync('*.shp', {
+      const shapefiles = glob.sync('*.shp', {
         cwd: resolve(SHAPEFILES_DIR, dirname),
       });
-      if (!shapefile) return;
+
+      if (shapefiles.length === 0) return;
 
       // retorna dados preparados
 
       const [, year, month, name] = dirname.match(regex) || [];
 
-      return {
-        dirname,
-        shapefile,
-        path: join(dirname, shapefile),
-        prefix: `${year}${month}`,
-        name: (name || '').slice(1).trim(),
-      };
+      return { dirname, shapefiles, prefix: `${year}${month}`, name: (name || '').slice(1).trim() };
     })
     .filter((data) => data !== undefined) as ShapefileData[];
 
@@ -103,7 +97,9 @@ export async function exec() {
 
     if (!hasTable) {
       consola.info('Processando shapefile...');
-      await ogr2ogr(join('queimadas', data.path), data.tmpTable);
+      const opts = { table: data.tmpTable, overwrite: false };
+      for (const shapefile of data.shapefiles)
+        await ogr2ogr(join('queimadas', join(data.dirname, shapefile)), opts);
     }
 
     consola.info('Verificando existência de dados antigos em "public"...');
