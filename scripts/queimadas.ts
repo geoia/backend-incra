@@ -127,11 +127,12 @@ export async function exec() {
     consola.info(`Arquivo ${data.dirname} finalizado.`);
   });
 
-  await knex.schema
-    .withSchema('public')
-    .createViewOrReplace('mapas_queimadas', (view) =>
-      view.as(knex.from(shapefiles.at(-1)?.table || ''))
-    );
+  await knex.transaction(async (trx) => {
+    await trx.schema.withSchema('public').dropViewIfExists('mapas_queimadas');
+    await trx.schema
+      .withSchema('public')
+      .createView('mapas_queimadas', (view) => view.as(knex.from(shapefiles.at(-1)?.table || '')));
+  });
 
   consola.success('Processo finalizado com sucesso!');
 }
