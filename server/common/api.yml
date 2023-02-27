@@ -7,7 +7,7 @@ servers:
   - url: /api/v1
 tags:
   - name: Mapas
-    description: API para obtenção de mapas com delimitações locais
+    description: API para consulta de mapas
   - name: Queimadas
     description: API para consulta de dados de queimadas
   - name: Specification
@@ -21,11 +21,9 @@ paths:
         - $ref: '#/components/parameters/municipio_id'
       responses:
         200:
-          description: Retorna dados do mapa do municio no formato GeoJson
+          description: Retorna dados de queimadas do municipio no formato GeoJson
         204:
-          description: O municio existe mas o mapa não está disponível
-        404:
-          description: O municio com código informado não foi encontrado
+          description: Não existem dados para a consulta
   /mapas/estado/{id}:
     get:
       tags:
@@ -34,11 +32,9 @@ paths:
         - $ref: '#/components/parameters/estado_id'
       responses:
         200:
-          description: Retorna dados do mapa do municio no formato GeoJson
+          description: Retorna dados de queimadas do municipio no formato GeoJson
         204:
-          description: O municio existe mas o mapa não está disponível
-        404:
-          description: O municio com código informado não foi encontrado
+          description: Não existem dados para a consulta
   /queimadas/municipio/{id}:
     get:
       tags:
