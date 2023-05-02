@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { entFederais } from '../../services/mapas_com_dados.service';
-import L from '../../../common/logger';
 
 async function get(req: Request, res: Response) {
   const criteria = req.url.includes('municipios')
