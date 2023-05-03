@@ -19,10 +19,7 @@ export async function mapas(opts: HandlerOpts) {
 
   const [mapa, id] = isNotNil(estado) ? ['mapas_estados', estado] : ['mapas_municipios', municipio];
 
-  L.debug(
-    'Obtendo dados de queimadas usando "%s"...',
-    formatter.object({ mapa, id })
-  );
+  L.debug('Obtendo dados de queimadas usando "%s"...', formatter.object({ mapa, id }));
   const { rowCount, rows } = await knex.raw(
     `
     SELECT ST_AsGeoJSON(ST_Transform(map.wkb_geometry, 4326), 6) AS geojson FROM ${mapa} map WHERE map.id = ${id}
