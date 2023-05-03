@@ -1,9 +1,6 @@
 import L from '../../common/logger';
 import knex from '../../common/knex';
-import { Polygon, Feature, featureCollection, combine } from '@turf/turf';
-import { simplify as simplifyFn, polygon } from '@turf/turf';
 import { isNil, negate } from 'lodash';
-// import { union } from '../../common/utils/polygons';
 import formatter from '../../common/utils/formatter';
 
 const isNotNil = negate(isNil);
