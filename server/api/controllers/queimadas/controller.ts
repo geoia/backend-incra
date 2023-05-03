@@ -1,5 +1,14 @@
 import { Request, Response } from 'express';
 import { queimadas, count } from '../../services/queimadas.service';
+import { entidadesComDados } from '../../services/mapas.service';
+
+async function find(req: Request, res: Response) {
+  const criteria = req.url.includes('municipios') ? 'mapas_municipios' : 'mapas_estados';
+
+  const result = await entidadesComDados(criteria);
+
+  return res.status(result ? 200 : 204).send(result);
+}
 
 async function get(req: Request, res: Response) {
   const criteria = req.params.municipio
@@ -45,4 +54,4 @@ async function get(req: Request, res: Response) {
   return partialResponse.send(result);
 }
 
-export default { get };
+export default { get, find };

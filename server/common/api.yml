@@ -8,8 +8,6 @@ servers:
 tags:
   - name: Mapas
     description: API para consulta de mapas
-  - name: Mapas com Dados
-    description: API para consulta de mapas que tem registro de queimadas
   - name: Queimadas
     description: API para consulta de dados de queimadas
   - name: Specification
@@ -37,19 +35,19 @@ paths:
           description: Retorna dados de queimadas do municipio no formato GeoJson
         204:
           description: Não existem dados para a consulta
-  /mapas_com_dados/municipios:
+  /queimadas/municipios:
     get:
       tags:
-        - Mapas com Dados
+        - Queimadas
       responses:
         200:
           description: Retorna nome de municipios que possuem queimadas no tempo delimitado
         204:
           description: Não existem dados para a consulta
-  /mapas_com_dados/estados:
+  /queimadas/estados:
     get:
       tags:
-        - Mapas com Dados
+        - Queimadas
       responses:
         200:
           description: Retorna nome de municipios que possuem queimadas no tempo delimitado
