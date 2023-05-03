@@ -35,6 +35,24 @@ paths:
           description: Retorna dados de queimadas do municipio no formato GeoJson
         204:
           description: Não existem dados para a consulta
+  /queimadas/municipios:
+    get:
+      tags:
+        - Queimadas
+      responses:
+        200:
+          description: Retorna nome de municipios que possuem queimadas no tempo delimitado
+        204:
+          description: Não existem dados para a consulta
+  /queimadas/estados:
+    get:
+      tags:
+        - Queimadas
+      responses:
+        200:
+          description: Retorna nome de municipios que possuem queimadas no tempo delimitado
+        204:
+          description: Não existem dados para a consulta
   /queimadas/municipio/{id}:
     get:
       tags:
