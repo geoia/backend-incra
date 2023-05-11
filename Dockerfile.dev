@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-RUN apk add --update nodejs npm gdal gdal-tools
+RUN apk add --update nodejs npm libpq-dev gdal gdal-tools gdal-driver-PG
 RUN npm install --global yarn
 RUN mkdir -p /usr/src/app
 

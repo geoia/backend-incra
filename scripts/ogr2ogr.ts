@@ -30,5 +30,8 @@ export default async function ogr2ogr(path: string, opts?: Ogr2OgrOpts) {
   p.stdout?.pipe(process.stdout);
   p.stderr?.pipe(process.stderr);
 
-  return new Promise<void>((resolve) => p.on('close', resolve));
+  return new Promise<void>((resolve, reject) => {
+    p.on('close', resolve);
+    p.on('error', reject);
+  });
 }
