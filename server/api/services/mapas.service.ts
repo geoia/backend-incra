@@ -16,7 +16,7 @@ export async function entidadesComDados(type: 'mapas_municipios' | 'mapas_estado
   const { rowCount, rows } = await knex.raw(
     `
     WITH queimadas AS (SELECT ST_Union(ST_Simplify(mq.wkb_geometry, 0.1, TRUE)) AS wkb_geometry FROM mapas_queimadas mq)
-    SELECT DISTINCT ma.id, ma.nome FROM ${type} ma JOIN queimadas mq ON ST_Intersects(ST_Transform(ma.wkb_geometry, 4326), mq.wkb_geometry)
+    SELECT DISTINCT ma.id, ma.nome, (mq.wkb_geometry is not null) as queimadas FROM ${type} ma LEFT JOIN queimadas mq ON ST_Intersects(ST_Transform(ma.wkb_geometry, 4326), mq.wkb_geometry)
     `
   );
 

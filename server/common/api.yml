@@ -41,7 +41,7 @@ paths:
         - Queimadas
       responses:
         200:
-          description: Retorna nome de municipios que possuem queimadas no tempo delimitado
+          description: Retorna os municipios e se estes possuem queimadas
         204:
           description: Não existem dados para a consulta
   /queimadas/estados:
@@ -50,7 +50,7 @@ paths:
         - Queimadas
       responses:
         200:
-          description: Retorna nome de municipios que possuem queimadas no tempo delimitado
+          description: Retorna os estados e se estes possuem queimadas
         204:
           description: Não existem dados para a consulta
   /queimadas/municipio/{id}:
