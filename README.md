@@ -44,35 +44,59 @@ Começe indicando qual, ou quais, sistemas operacionais são suportados. Por exe
 Para cada uma das dependências do sistema é importatne listar também a versão mínima necessária. Por exemplo:
 
 - [Docker](https://www.docker.com/) (versão 20 ou superior)
-  - Se necessário, você pode deixar alguma observação ou instrução necessária.
-- [Node.js](https://nodejs.org/) (versão 18.16.0 LTS)
-- [WSL](https://learn.microsoft.com/pt-br/windows/wsl/install) 
+- [Node.js](https://nodejs.org/) (versão 18.16.0 LTS) 
 - [Yarn](https://classic.yarnpkg.com/en/docs/install#windows-stable)
+- [WSL](https://learn.microsoft.com/pt-br/windows/wsl/install)
 - ...
 
 ## Instalação / Implantação
 
+Para utilizar a aplicação em seu computador, é necessário clonar o repositório do GitHub em sua máquina local. Para isso, abra o terminal do seu sistema operacional e navegue até o diretório onde deseja armazenar o repositório da aplicação. Em seguida, execute o seguinte comando:
+
+```sh
+git clone https://github.com/geoia/backend
+```
+Esse comando irá clonar o repositório da aplicação em seu diretório atual.
+
+### Instalação de Requisitos
+
+O Yarn é uma alternativa ao npm (Node Package Manager), utilizado para instalar e gerenciar pacotes _Node.js_ e suas dependências. O próximo comando, ao executa-lo no terminal, é usado para instalar o gerenciador de pacotes Yarn de forma global no seu sistema operacional:
+```sh
+npm install --global yarn
+```
+
+WSL ("Windows Subsystem for Linux") permite ao usuário utilizar ferramentas e aplicativos do Linux sem precisar sair do sistema operacional Windows. Para instala-lo, digite no terminal:
+ 
+```sh
+wsl --install
+```
+
+### Inicializar um ambiente Docker 
+ 
 Docker Compose é uma ferramenta que permite definir e executar aplicativos containers de maneira fácil e eficiente. Utiliza-se um arquivo YAML para definir os serviços que compõem um aplicativo, e pode ser usado para iniciar, parar e gerenciar vários contêineres Docker como um único aplicativo. Com o Docker Compose, é possível definir todas as dependências do aplicativo em um único arquivo, facilitando a implantação e o gerenciamento. 
+
+Abra o terminal no diretório do projeto, e siga com os seguintes comandos para importar e iniciar o ambiente da aplicação:
 
 ```sh
 docker compose build backend.dev
 ```
+> Constrói as imagens Docker definidas no arquivo backend.dev
 
 ```sh
 docker compose run --rm backend.dev yarn
 ```
+> Inicia um container temporário e executa o comando yarn no contexto do container.
 
 ```sh
 docker compose run --rm backend.dev yarn scripts:municipios
 ```
+> Executa o script definido no arquivo package.json chamado "scripts:municipios".
 
 ```sh
 docker compose up backend.dev
 ```
+>  Inicia o ambiente de desenvolvimento completo. Desse modo, a aplicação estará pronta para ser usada para fins de desenvolvimento.
 
-```sh
-npm install --global yarn
-```
 
 Se o sistema precisa ser implantado manualmente, descreva detalhadamente os passos necessários para a correta instalação. Neste caso, u
 
