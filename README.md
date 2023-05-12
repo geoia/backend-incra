@@ -1,4 +1,4 @@
-# <p align="center"> Práticas em Desenvolvimento de Software <br/> (Repositório Modelo) </p>
+# <p align="center"> Práticas em Desenvolvimento de Software <br/>  </p>
 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/58231791/237037360-3fb30429-cd73-440d-91b7-ab345081c45f.png" height="175px" />
@@ -37,15 +37,9 @@ Liste as principais funcionalidades do sistema implementado. Você pode usar de 
 
 ## Requisitos
 
-Aqui você deve apresentar todos os requisitos para que sua aplicação funcione corretamente. Você também pode listar dependências opcionais, se houver.
-
-Começe indicando qual, ou quais, sistemas operacionais são suportados. Por exemplo: `Este sistema foi desenvolvido e amplamente testado em ambientes Unix ...`
-
-Para cada uma das dependências do sistema é importatne listar também a versão mínima necessária. Por exemplo:
-
 - [Docker](https://www.docker.com/) (versão 20 ou superior)
 - [Node.js](https://nodejs.org/) (versão 18.16.0 LTS) 
-- [Yarn](https://classic.yarnpkg.com/en/docs/install#windows-stable)
+- [Yarn](https://classic.yarnpkg.com/en/docs/install#windows-stable) (v1.22.19)
 - [WSL](https://learn.microsoft.com/pt-br/windows/wsl/install)
 - ...
 
@@ -97,19 +91,29 @@ docker compose up backend.dev
 ```
 >  Inicia o ambiente de desenvolvimento completo. Desse modo, a aplicação estará pronta para ser usada para fins de desenvolvimento.
 
-
-Se o sistema precisa ser implantado manualmente, descreva detalhadamente os passos necessários para a correta instalação. Neste caso, u
-
-1. Abra um terminal no diretório do projeto ....
-2. Instale as dependências usando o comando xxxx ...
-3. Compile o código fonte com o comando yyyy ...
-4. ....
-
-Por fim, lembre-se de destacar quando necessário quais variáveis de ambientes (do inglês _environment variables_) são utilizadas ou necessárias para o processo. Muitas vezes a falta destas variáveis pode causar erros e impedir a correta implantação do sistema.
+A aplicação será executada em http://localhost:3001.
 
 ## Primeiros passos
 
-Use esta seção para mostrar os primeiros passos para usar a aplicação. Lembre-se que esta parte deve ser focada no uso pelos clientes finais da aplicação, portanto, seja objetivo e use _screenshots_ quando necessário.
+A aplicação atualmente oferece recursos para realizar buscas de Municípios e Estados que apresentam registros de queimadas dentro de seus limites territoriais. A aplicação fornece uma **API** que permite visualizar as regiões dos polígonos de queimadas, acessível através da busca pelo _nome ou ID do Município_. Na imagem abaixo, é possível ver a tela de visualização dos polígonos de queimadas:
+
+<p align="center">
+  <img src="" height="175px" />
+  <br/>
+  <small></small>
+</p>
+
+>   A resposta será um texto GeoJSON contendo as informações dos polígonos das áreas queimadas no Município correspondente ao ID informado.
+
+Além disso, na outra sessão da **API**, encontra-se uma sessão de pesquisa de busca por _nome, sigla ou [ID de Estado](https://docs.google.com/spreadsheets/d/1tQB3EUXZrys5tpWlwSLnpINiCo4D6c8WZem821ei9GM/edit?usp=sharing)_, em que também é possível acessar a visualização dos polígonos de queimadas. A figura abaixo mostra a tela de visualização dos polígonos de queimadas disponíveis para um determinado Estado.
+
+<p align="center">
+  <img src="" height="175px" />
+  <br/>
+  <small></small>
+</p>
+
+>  A resposta será um texto GeoJSON contendo as informações dos polígonos das áreas queimadas no Estado correspondente ao ID informado.
 
 ## Autores e histórico
 
@@ -117,7 +121,7 @@ Este sistema foi desenvolvido pela seguinte equipe:
 
 - [Hudson Silva Borges](https://github.com/hsborges) (hudsonsilbor@gmail.com)
 - [Allan Menchik da Cunha](https://github.com/Menchik) (allan.m@ufms.br)
-- [Lourdes Oshiro Igarashi](https://github.com/LourdesOshiroIgarashi) (@gmail.com)
+- [Lourdes Oshiro Igarashi](https://github.com/LourdesOshiroIgarashi) (lourdes.oshiro@ufms.br)
 - [Marcus Vinícius Borges Gajozo](https://github.com/marcusgajozo) (marcusgajozo@gmail.com)
 - [Matheus Nantes Rezende da Silva](https://github.com/matheus-nantes) (nantes.matheus@ufms.br)
 - [Rafael Torres Nantes](https://github.com/rafael-torres-nantes) (rafatorresnantes@gmail.com)
