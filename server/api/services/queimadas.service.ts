@@ -8,11 +8,17 @@ import formatter from '../../common/utils/formatter';
 
 const isNotNil = negate(isNil);
 
-type BaseHandlerOpts = { detailed?: boolean; limit?: number; page?: number };
-type LocaleOpts = { municipio?: number; estado?: number } & (
+type BaseHandlerOpts = {
+  detailed?: boolean;
+  limit?: number;
+  page?: number;
+};
+
+type LocaleOpts = { source?: string; municipio?: number; estado?: number } & (
   | { municipio: number }
   | { estado: number }
 );
+
 type HandlerOpts = BaseHandlerOpts & LocaleOpts;
 
 export async function count(opts: LocaleOpts) {
@@ -23,7 +29,7 @@ export async function count(opts: LocaleOpts) {
   L.debug('Obtendo contagem de queimadas usando "%s"...', formatter.object({ mapa, id }));
   const { rows } = await knex.raw(
     `
-    SELECT COUNT(m.fid) AS count FROM mapas_queimadas m
+    SELECT COUNT(m.fid) AS count FROM mapas_queimadas${opts.source ? `_${opts.source}` : ''} m
     WHERE ST_Within(
       ST_Transform(m.wkb_geometry, 4326),
       (SELECT ST_Transform(map.wkb_geometry, 4326) FROM ${mapa} map WHERE map.id = ${id})
@@ -32,6 +38,14 @@ export async function count(opts: LocaleOpts) {
   );
 
   return rows.at(0).count as number;
+}
+
+export async function sources(): Promise<Array<{ year: number; month: number }>> {
+  const { rows } = await knex.raw(`
+    SELECT prefix FROM mapas_queimadas_historico
+  `);
+
+  return rows.map((row: { prefix: string }) => row.prefix);
 }
 
 function ensureValue(value: number | undefined, min: number, max?: number) {
@@ -48,16 +62,17 @@ export async function queimadas(opts: HandlerOpts) {
   limit = ensureValue(limit, 100);
 
   const [mapa, id] = isNotNil(estado) ? ['mapas_estados', estado] : ['mapas_municipios', municipio];
+  const table = `mapas_queimadas${opts.source ? `_${opts.source}` : ''}`;
 
   L.debug(
     'Obtendo dados de queimadas usando "%s"...',
-    formatter.object({ mapa, id, detailed, page })
+    formatter.object({ mapa, id, detailed, page, table })
   );
   const { rowCount, rows } = await knex.raw(
     `
     SELECT ST_AsGeoJSON(ST_Transform(sm.geom, 4326), 6) AS geojson
     FROM (
-      SELECT m.wkb_geometry AS geom FROM mapas_queimadas m
+      SELECT m.wkb_geometry AS geom FROM ${table} m
       WHERE ST_Within(
         ST_Transform(m.wkb_geometry, 4326),
         (SELECT ST_Transform(map.wkb_geometry, 4326) FROM ${mapa} map WHERE map.id = ${id})
@@ -93,4 +108,4 @@ export async function queimadas(opts: HandlerOpts) {
   return multiPolygons;
 }
 
-export default { count, queimadas };
+export default { count, sources, queimadas };

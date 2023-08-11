@@ -53,6 +53,15 @@ paths:
           description: Retorna os estados e se estes possuem queimadas
         204:
           description: Não existem dados para a consulta
+  /queimadas/sources:
+    get:
+      tags:
+        - Queimadas
+      responses:
+        200:
+          description: Retorna a lista fontes com dados sobre queimadas no formato YYYYMM
+        204:
+          description: Não existem dados para a consulta
   /queimadas/municipio/{id}:
     get:
       tags:
@@ -62,6 +71,7 @@ paths:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/per_page'
         - $ref: '#/components/parameters/detailed'
+        - $ref: '#/components/parameters/source'
       responses:
         200:
           description: Retorna dados de queimadas do municipio no formato GeoJson
@@ -76,6 +86,7 @@ paths:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/per_page'
         - $ref: '#/components/parameters/detailed'
+        - $ref: '#/components/parameters/source'
       responses:
         200:
           description: Retorna dados de queimadas do estado no formato GeoJson
@@ -126,4 +137,10 @@ components:
       schema:
         type: boolean
         default: false
+      required: false
+    source:
+      in: query
+      name: source
+      schema:
+        type: string
       required: false

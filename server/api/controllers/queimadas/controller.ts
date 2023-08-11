@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { queimadas, count } from '../../services/queimadas.service';
+import { queimadas, count, sources } from '../../services/queimadas.service';
 import { entidadesComDados } from '../../services/mapas.service';
 
 async function find(req: Request, res: Response) {
@@ -8,6 +8,10 @@ async function find(req: Request, res: Response) {
   const result = await entidadesComDados(criteria);
 
   return res.status(result ? 200 : 204).send(result);
+}
+
+async function getSources(_: Request, res: Response) {
+  sources().then((result) => res.status(result ? 200 : 204).send(result));
 }
 
 async function get(req: Request, res: Response) {
@@ -19,9 +23,11 @@ async function get(req: Request, res: Response) {
 
   const page = parseInt((req.query.page || '1').toString());
   const perPage = parseInt((req.query.per_page || '100').toString());
+  const source = req.query.source?.toString();
 
   const result = await queimadas({
     ...criteria,
+    source,
     limit: perPage,
     page: page,
     detailed: req.query.detailed?.toString().toLowerCase() === 'true',
@@ -54,4 +60,4 @@ async function get(req: Request, res: Response) {
   return partialResponse.send(result);
 }
 
-export default { get, find };
+export default { get, getSources, find };
