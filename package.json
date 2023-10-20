@@ -35,6 +35,7 @@
     "dayjs": "^1.11.7",
     "decompress": "^4.2.1",
     "dotenv": "^16.0.0",
+    "enquirer": "^2.4.1",
     "express": "^4.17.3",
     "express-openapi-validator": "^4.13.8",
     "helmet": "^6.0.1",

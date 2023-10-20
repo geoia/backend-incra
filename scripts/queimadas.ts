@@ -1,7 +1,7 @@
 import knex from '../server/common/knex';
 import glob from 'glob';
 import { join, resolve } from 'path';
-import { each } from 'bluebird';
+import { each, mapSeries } from 'bluebird';
 import consola from 'consola';
 import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
@@ -9,7 +9,8 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { Knex } from 'knex';
 import ogr2ogr from './ogr2ogr';
 import { CronJob } from 'cron';
-import { Option, program } from 'commander';
+import { Command, Option, program } from 'commander';
+import MultiSelect from 'enquirer/lib/prompts/multiselect';
 
 dayjs.extend(utcPlugin);
 dayjs.extend(relativeTime);
@@ -113,9 +114,9 @@ export async function exec() {
           .raw(`CREATE TABLE ${data.table} AS TABLE shapefiles."${data.tmpTable}"`);
 
         await trx.schema.withSchema('public').raw(
-          `UPDATE ${data.table} t
-           SET t.wkb_geometry = ST_SetSRID(t.wkb_geometry, 3857) 
-           WHERE ST_SRID(t.wkb_geometry) = 0;`
+          `UPDATE ${data.table}
+           SET wkb_geometry = ST_SetSRID(wkb_geometry, ${process.env.DEFAULT_EPSG || '3857'}) 
+           WHERE ST_SRID(wkb_geometry) = 0;`
         );
 
         await trx.schema
@@ -156,12 +157,73 @@ export function cronExec(cronTime: string) {
   return job;
 }
 
+export async function execDelete(prefixes: string[], trx?: Knex.Transaction) {
+  const conn = trx || (await knex.transaction());
+
+  consola.info(`Preparing to remove tables with prefixes: ${prefixes.join(', ')}`);
+  await mapSeries(prefixes, async (prefix) => {
+    consola.debug(`Removing tables and metadata from ${prefix} ...`);
+    return Promise.all([
+      conn.delete().from('public.mapas_queimadas_historico').where({ prefix: prefix }),
+      conn.raw(`DROP TABLE public.mapas_queimadas_${prefix} CASCADE`),
+      conn.raw(`DROP TABLE shapefiles.shapefiles_queimadas_${prefix} CASCADE`),
+    ]);
+  })
+    .then(async () => {
+      consola.debug(`Setting up views from current data ...`);
+      const result = await conn
+        .from('public.mapas_queimadas_historico')
+        .select('prefix')
+        .orderBy('prefix', 'desc')
+        .first<{ prefix: string }>();
+
+      await conn.schema.withSchema('public').dropViewIfExists('mapas_queimadas');
+
+      if (result) {
+        await conn.schema
+          .withSchema('public')
+          .createView('mapas_queimadas', (view) =>
+            view.as(knex.from(`mapas_queimadas_${result.prefix}`))
+          );
+      }
+
+      consola.success('Data successfully removed');
+      if (!trx) conn.commit();
+    })
+    .catch((error) => {
+      if (!trx) conn.rollback();
+      consola.error(error);
+      throw error;
+    });
+}
+
 if (require.main === module) {
   program
-    .addOption(new Option('--cron [value]', 'The time to fire off the update in the cron syntax'))
-    .action(async (opts: { cron?: string }) => {
-      if (opts.cron) cronExec(opts.cron);
-      else await exec().then(() => knex.destroy());
-    })
+    .addCommand(
+      new Command('exec')
+        .addOption(
+          new Option('--cron [value]', 'The time to fire off the update in the cron syntax')
+        )
+        .action(async (opts: { cron?: string }) => {
+          if (opts.cron) cronExec(opts.cron);
+          else await exec().then(() => knex.destroy());
+        }),
+      { isDefault: true }
+    )
+    .addCommand(
+      new Command('delete').action(async () => {
+        const prefixes: Array<{ prefix: string }> = await knex
+          .select('prefix')
+          .from('public.mapas_queimadas_historico');
+
+        const prompt = new MultiSelect({
+          message: 'Select prefixes to remove',
+          limit: 5,
+          choices: prefixes.map(({ prefix }) => prefix),
+        });
+
+        return execDelete(await prompt.run()).then(() => knex.destroy());
+      })
+    )
     .parseAsync(process.argv);
 }
