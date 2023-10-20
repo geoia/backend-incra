@@ -112,6 +112,12 @@ export async function exec() {
           .withSchema('public')
           .raw(`CREATE TABLE ${data.table} AS TABLE shapefiles."${data.tmpTable}"`);
 
+        await trx.schema.withSchema('public').raw(
+          `UPDATE ${data.table} t
+           SET t.wkb_geometry = ST_SetSRID(t.wkb_geometry, 3857) 
+           WHERE ST_SRID(t.wkb_geometry) = 0;`
+        );
+
         await trx.schema
           .withSchema('public')
           .raw(`CREATE INDEX IF NOT EXISTS geom_idx ON ${data.table} USING gist (wkb_geometry)`);
