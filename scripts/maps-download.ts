@@ -5,6 +5,7 @@ import { withFile } from 'tmp-promise';
 import decompress from 'decompress';
 import { join, resolve } from 'node:path';
 import consola from 'consola';
+import crypto from 'crypto';
 
 async function download(url: string, dest: string): Promise<void> {
   consola.info('Downloading %s', url);
@@ -13,7 +14,13 @@ async function download(url: string, dest: string): Promise<void> {
     consola.debug('Baixando arquivos ...');
     await new Promise<void>((resolve, reject) => {
       const fileStream = createWriteStream(path);
-      https.get(url, (res) => res.pipe(fileStream));
+      https.get(
+        url,
+        {
+          agent: new https.Agent({ secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT }),
+        },
+        (res) => res.pipe(fileStream)
+      );
       fileStream.on('finish', resolve);
       fileStream.on('error', reject);
     });
