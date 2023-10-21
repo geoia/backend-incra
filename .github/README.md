@@ -4,7 +4,7 @@
   <img src="logo.svg" height="175px" />
 </p>
 
-Repositório destinado ao armazenamento do código do servoço para a aplicação EcoGis.
+Repositório destinado ao armazenamento do código do serviço *backend* para a aplicação EcoGis.
 
 
 ## Estrutura do documento
@@ -16,25 +16,26 @@ Repositório destinado ao armazenamento do código do servoço para a aplicaçã
   - [Ambiente de desenvolvimento](#ambiente-de-desenvolvimento)
   - [Organização e processamento dos dados](#organização-e-processamento-dos-dados)
   - [Implantação](#implantação)
-  - [Autores e histórico](#autores-e-histórico)
+  - [Autores](#autores)
 
 
 ## Funcionalidades
 
-Os principais objetivos desse serviço são
+Os principais objetivos desse serviço são:
 
-- [ ] Processamento automatizado dos dados
-- [ ] Armazenamento de históricos
-- [ ] Fornecer uma API para consulta dos seguintes dados:
-  - [ ] Mapas de municipios
-  - [ ] Mapas de estados
-  - [ ] Mapeamento de queimadas de municípios
-  - [ ] Mapeamento de queimadas de estados
+- [x] Processamento automatizado dos dados
+- [x] Armazenamento de históricos
+- [x] Fornecer uma API para consulta dos seguintes dados:
+  - [x] Mapas de municipios
+  - [x] Mapas de estados
+  - [x] Mapeamento de queimadas de municípios
+  - [x] Mapeamento de queimadas de estados
+  - [ ] Estatisticas dos dados das queimadas
 
 
 ## Preparação do ambiente
 
-Este sistema foi desenvolvido e testado em ambientes Unix (Ubuntu, Manjaro e OSX). Embora os procedimento possam, teoricamente, ser replicados em sistemas Windows, pode ser necessário que alguns dos passos listados a seguir sejam adaptados,
+Este serviço foi desenvolvido e testado em ambientes Unix (Ubuntu, Manjaro e OSX). Embora os procedimento possam, teoricamente, ser replicados em sistemas Windows, pode ser necessário que alguns dos passos listados a seguir sejam adaptados,
 
 Além disso, é necessário que as seguintes dependências estejam instalados no computador.
 
@@ -120,7 +121,7 @@ curl -Is http://127.0.0.1:3001 | head -n 1
 **Importante**: Lembre-se de verificar e configurar todas variáveis com cuidado em ambientes de produção.
 
 
-## Autores e histórico
+## Autores
 
 Este sistema foi desenvolvido pela seguinte equipe:
 
