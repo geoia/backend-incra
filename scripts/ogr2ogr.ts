@@ -8,6 +8,9 @@ type Ogr2OgrOpts = {
   progress?: boolean;
 };
 
+/***
+ * Função que faz chamada de sistema para processamento de arquivos shapefile
+ */
 export default async function ogr2ogr(path: string, opts?: Ogr2OgrOpts) {
   const normalizedOpts = Object.assign({ overwrite: true, progress: true }, opts || {});
 

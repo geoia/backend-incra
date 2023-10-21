@@ -7,6 +7,9 @@ import { join, resolve } from 'node:path';
 import consola from 'consola';
 import crypto from 'crypto';
 
+/***
+ * Função auxiliar que faz o download e extrai arquivos.
+ */
 async function download(url: string, dest: string): Promise<void> {
   consola.info('Downloading %s', url);
   consola.debug('Preparando arquivos temporários ...');

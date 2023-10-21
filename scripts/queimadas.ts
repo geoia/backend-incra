@@ -15,8 +15,6 @@ import MultiSelect from 'enquirer/lib/prompts/multiselect';
 dayjs.extend(utcPlugin);
 dayjs.extend(relativeTime);
 
-const SHAPEFILES_DIR = resolve(__dirname, '..', 'shapefiles', 'queimadas');
-
 type ShapefileData = {
   dirname: string;
   shapefiles: string[];
@@ -24,6 +22,9 @@ type ShapefileData = {
   name: string;
 };
 
+/***
+ * Função que tem por objetivo atualizar a tabela de resumo dos dados no banco
+ */
 async function updateHistory({ prefix, dirname }: ShapefileData, trx?: Knex.Transaction) {
   const conn = trx || knex;
 
@@ -51,10 +52,14 @@ async function updateHistory({ prefix, dirname }: ShapefileData, trx?: Knex.Tran
     .into('mapas_queimadas_historico');
 }
 
-// Função para identificar shapefiles disponíveis
+/***
+ * Função para identificar shapefiles disponíveis
+ */
 function filesList(): ShapefileData[] {
+  const shapefilesDir = resolve(__dirname, '..', 'shapefiles', 'queimadas');
+
   // le todos os diretorios em queimadas
-  const localDirs = glob.sync('*', { cwd: SHAPEFILES_DIR });
+  const localDirs = glob.sync('*', { cwd: shapefilesDir });
   const regex = /^(\d{4})(\d{2})(_.*){0,1}$/i;
 
   const data = localDirs
@@ -64,7 +69,7 @@ function filesList(): ShapefileData[] {
 
       //verificar se existem um arquivo .shp no diretório
       const shapefiles = glob.sync('*.shp', {
-        cwd: resolve(SHAPEFILES_DIR, dirname),
+        cwd: resolve(shapefilesDir, dirname),
       });
 
       if (shapefiles.length === 0) return;
@@ -80,6 +85,12 @@ function filesList(): ShapefileData[] {
   return data.sort((a, b) => a.prefix.localeCompare(b.prefix));
 }
 
+/***
+ * Função principal que:
+ * - Obtém a lista de arquivos disponíveis na pasta de shapefiles/queimadas
+ * - Processa e armazena cada registro encontrado
+ * - Atualiza a visão mais recente para o registro mais recente
+ */
 export async function exec() {
   // obtem lista de shapefiles disponíveis
   const shapefiles = filesList().map((data) =>
@@ -140,6 +151,9 @@ export async function exec() {
   consola.success('Processo finalizado com sucesso!');
 }
 
+/***
+ * Função que permite agendar a execução do processamento usando cron
+ */
 export function cronExec(cronTime: string) {
   const { timeZone } = Intl.DateTimeFormat().resolvedOptions();
   const job = new CronJob(cronTime, exec, null, true, timeZone);
@@ -157,6 +171,11 @@ export function cronExec(cronTime: string) {
   return job;
 }
 
+/***
+ * Função que permite apagar registros de dados do banco.
+ * Essa função é necessária porque várias tabelas e registros são gerados no processo.
+ * Essa função apaga tudo de forma segura para manter a consistência do banco
+ */
 export async function execDelete(prefixes: string[], trx?: Knex.Transaction) {
   const conn = trx || (await knex.transaction());
 
