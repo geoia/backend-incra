@@ -5,7 +5,7 @@ import { each, mapSeries } from 'bluebird';
 import { join } from 'node:path';
 import ogr2ogr from './ogr2ogr';
 import { Option, program } from 'commander';
-import { normalizeSRID } from './utils/normalize';
+import { normalizeSRID } from './utils';
 
 interface MunicipiosIBGE {
   'municipio-id': number;

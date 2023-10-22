@@ -1,9 +1,6 @@
 import L from '../../common/logger';
 import knex from '../../common/knex';
-import { Polygon, Feature, featureCollection, combine } from '@turf/turf';
-import { simplify as simplifyFn, polygon } from '@turf/turf';
 import { isNil, negate } from 'lodash';
-// import { union } from '../../common/utils/polygons';
 import formatter from '../../common/utils/formatter';
 
 const isNotNil = negate(isNil);
@@ -65,9 +62,11 @@ export async function queimadas(opts: HandlerOpts) {
     'Obtendo dados de queimadas usando "%s"...',
     formatter.object({ mapa, id, detailed, page, table })
   );
+  const simplifyFn = (text: string) => (detailed ? text : `ST_Simplify(${text}, 0.0001)`);
+
   const { rowCount, rows } = await knex.raw(
     `
-    SELECT ST_AsGeoJSON(sm.geom, 6) AS geojson
+    SELECT ST_AsGeoJSON(${simplifyFn(`ST_Union(sm.geom)`)}, 6) AS geojson
     FROM (
       SELECT m.wkb_geometry AS geom FROM ${table} m
       WHERE ST_Within(m.wkb_geometry, (SELECT map.wkb_geometry FROM ${mapa} map WHERE map.id = ${id}))
@@ -79,27 +78,8 @@ export async function queimadas(opts: HandlerOpts) {
 
   if (rowCount === 0) return null;
 
-  L.debug('Transformando dados em poligonos...');
-  const polygons: Feature<Polygon>[] = rows.map((row: { geojson: string }) =>
-    polygon(JSON.parse(row.geojson).coordinates)
-  );
-
-  L.debug('Agrupando (%s) poligonos em um único geojson...', rowCount);
-  let multiPolygons = combine(featureCollection(polygons));
-  // let multiPolygons = featureCollection(
-  //   chunk(polygons, 1000).map((polygonsChunk) => union(polygonsChunk))
-  // );
-
-  if (!detailed) {
-    L.debug('Simplificando poligonos...');
-    multiPolygons = simplifyFn(multiPolygons, { tolerance: 0.001, highQuality: true });
-  }
-
-  // manobra para reduzir tamanho do resultado
-  multiPolygons.features[0].properties.collectedProperties = [];
-
-  L.debug('Dados queimadas prontos, retornando...');
-  return multiPolygons;
+  L.debug('Dados de queimadas prontos, retornando...');
+  return JSON.parse(rows[0].geojson);
 }
 
 export default { count, sources, queimadas };

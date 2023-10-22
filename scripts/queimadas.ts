@@ -11,7 +11,7 @@ import ogr2ogr from './ogr2ogr';
 import { CronJob } from 'cron';
 import { Command, Option, program } from 'commander';
 import MultiSelect from 'enquirer/lib/prompts/multiselect';
-import { normalizeSRID } from './utils/normalize';
+import { makeValid, normalizeSRID } from './utils';
 
 dayjs.extend(utcPlugin);
 dayjs.extend(relativeTime);
@@ -121,9 +121,11 @@ export async function exec() {
     if (!hasPublicTable) {
       consola.info('Copiando dados do mapa para shema public...');
       await knex.transaction(async (trx) => {
-        await trx.schema
-          .withSchema('public')
-          .raw(`CREATE TABLE ${data.table} AS TABLE shapefiles."${data.tmpTable}"`);
+        await trx.schema.withSchema('public').raw(`
+          CREATE TABLE ${data.table} AS
+          SELECT dt.ogc_fid, dt.fid, dt.wkb_geometry::geometry
+          FROM shapefiles."${data.tmpTable}" dt
+        `);
 
         await trx.schema.withSchema('public').raw(
           `UPDATE ${data.table}
@@ -132,6 +134,7 @@ export async function exec() {
         );
 
         await normalizeSRID(`public.${data.table}`, 'wkb_geometry', { transaction: trx });
+        await makeValid(`public.${data.table}`, 'wkb_geometry', { transaction: trx });
 
         await trx.schema
           .withSchema('public')
