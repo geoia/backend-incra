@@ -5,6 +5,7 @@ import { each, mapSeries } from 'bluebird';
 import { join } from 'node:path';
 import ogr2ogr from './ogr2ogr';
 import { Option, program } from 'commander';
+import { normalizeSRID } from './utils/normalize';
 
 interface MunicipiosIBGE {
   'municipio-id': number;
@@ -100,35 +101,45 @@ async function populateMapasMunicipios(override?: boolean) {
   }
 
   consola.info('Carregando shapefiles do ibge no banco de dados...');
-  await ogr2ogr(join('mapas', 'BR_Municipios_2021', 'BR_Municipios_2021.shp'));
-  await ogr2ogr(join('mapas', 'BR_UF_2021', 'BR_UF_2021.shp'));
+  await Promise.all([
+    ogr2ogr(join('mapas', 'BR_Municipios_2021', 'BR_Municipios_2021.shp')),
+    ogr2ogr(join('mapas', 'BR_UF_2021', 'BR_UF_2021.shp')),
+  ]);
 
   await knex.transaction(async (trx) => {
     consola.info('Removendo dados antigos...');
-    await trx.schema.withSchema('public').dropTableIfExists('mapas_municipios');
-    await trx.schema.withSchema('public').dropTableIfExists('mapas_estados');
+    await Promise.all([
+      trx.schema.withSchema('public').dropTableIfExists('mapas_municipios'),
+      trx.schema.withSchema('public').dropTableIfExists('mapas_estados'),
+    ]);
 
     consola.info('Copiando dados das tabelas...');
-    await trx.schema.withSchema('public').raw(`
-      CREATE TABLE public.mapas_estados AS 
-      SELECT uf.cd_uf::integer AS id, uf.nm_uf AS nome, uf.sigla, uf.nm_regiao AS regiao, uf.wkb_geometry 
-      FROM shapefiles.br_uf_2021 uf
-    `);
+    await Promise.all([
+      trx.schema.withSchema('public').raw(`
+        CREATE TABLE public.mapas_estados AS 
+        SELECT uf.cd_uf::integer AS id, uf.nm_uf AS nome, uf.sigla, uf.nm_regiao AS regiao, uf.wkb_geometry::geometry(polygon)
+        FROM shapefiles.br_uf_2021 uf
+      `),
+      trx.schema.withSchema('public').raw(`
+        CREATE TABLE public.mapas_municipios AS 
+        SELECT uf.cd_mun::integer AS id, uf.nm_mun AS nome, uf.sigla, area_km2, uf.wkb_geometry::geometry(polygon)
+        FROM shapefiles.br_municipios_2021 uf
+      `),
+    ]);
 
-    await trx.schema.withSchema('public').raw(`
-      CREATE TABLE public.mapas_municipios AS 
-      SELECT uf.cd_mun::integer AS id, uf.nm_mun AS nome, uf.sigla, area_km2, uf.wkb_geometry 
-      FROM shapefiles.br_municipios_2021 uf
-    `);
+    consola.info('Normalizando referências...');
+    await Promise.all([
+      normalizeSRID('public.mapas_estados', 'wkb_geometry', { transaction: trx }),
+      normalizeSRID('public.mapas_municipios', 'wkb_geometry', { transaction: trx }),
+    ]);
 
     consola.info('Criando novos indices e chaves...');
-    await trx.schema
-      .withSchema('public')
-      .raw(`ALTER TABLE public.mapas_estados ADD PRIMARY KEY (id)`);
-
-    await trx.schema
-      .withSchema('public')
-      .raw(`ALTER TABLE public.mapas_municipios ADD PRIMARY KEY (id)`);
+    await Promise.all([
+      trx.schema.withSchema('public').raw(`ALTER TABLE public.mapas_estados ADD PRIMARY KEY (id)`),
+      trx.schema
+        .withSchema('public')
+        .raw(`ALTER TABLE public.mapas_municipios ADD PRIMARY KEY (id)`),
+    ]);
   });
 
   consola.success('Mapas dos municipios inseridos!');

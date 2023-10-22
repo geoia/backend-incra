@@ -30,10 +30,7 @@ export async function count(opts: LocaleOpts) {
   const { rows } = await knex.raw(
     `
     SELECT COUNT(m.fid) AS count FROM mapas_queimadas${opts.source ? `_${opts.source}` : ''} m
-    WHERE ST_Within(
-      ST_Transform(m.wkb_geometry, 4326),
-      (SELECT ST_Transform(map.wkb_geometry, 4326) FROM ${mapa} map WHERE map.id = ${id})
-    )
+    WHERE ST_Within(m.wkb_geometry, (SELECT map.wkb_geometry FROM ${mapa} map WHERE map.id = ${id}))
     `
   );
 
@@ -70,13 +67,10 @@ export async function queimadas(opts: HandlerOpts) {
   );
   const { rowCount, rows } = await knex.raw(
     `
-    SELECT ST_AsGeoJSON(ST_Transform(sm.geom, 4326), 6) AS geojson
+    SELECT ST_AsGeoJSON(sm.geom, 6) AS geojson
     FROM (
       SELECT m.wkb_geometry AS geom FROM ${table} m
-      WHERE ST_Within(
-        ST_Transform(m.wkb_geometry, 4326),
-        (SELECT ST_Transform(map.wkb_geometry, 4326) FROM ${mapa} map WHERE map.id = ${id})
-      )
+      WHERE ST_Within(m.wkb_geometry, (SELECT map.wkb_geometry FROM ${mapa} map WHERE map.id = ${id}))
       LIMIT ${limit}
       OFFSET ${(page - 1) * limit}
     ) sm;

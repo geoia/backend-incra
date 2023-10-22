@@ -11,6 +11,7 @@ import ogr2ogr from './ogr2ogr';
 import { CronJob } from 'cron';
 import { Command, Option, program } from 'commander';
 import MultiSelect from 'enquirer/lib/prompts/multiselect';
+import { normalizeSRID } from './utils/normalize';
 
 dayjs.extend(utcPlugin);
 dayjs.extend(relativeTime);
@@ -129,6 +130,8 @@ export async function exec() {
            SET wkb_geometry = ST_SetSRID(wkb_geometry, ${process.env.DEFAULT_EPSG || '3857'}) 
            WHERE ST_SRID(wkb_geometry) = 0;`
         );
+
+        await normalizeSRID(`public.${data.table}`, 'wkb_geometry', { transaction: trx });
 
         await trx.schema
           .withSchema('public')
