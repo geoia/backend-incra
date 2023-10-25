@@ -5,7 +5,7 @@ import { entidadesComDados } from '../../services/mapas.service';
 async function find(req: Request, res: Response) {
   const criteria = req.url.includes('municipios') ? 'mapas_municipios' : 'mapas_estados';
 
-  const result = await entidadesComDados(criteria);
+  const result = await entidadesComDados(criteria, req.query.source?.toString());
 
   return res.status(result ? 200 : 204).send(result);
 }

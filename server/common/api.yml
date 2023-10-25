@@ -39,6 +39,8 @@ paths:
     get:
       tags:
         - Queimadas
+      parameters:
+        - $ref: '#/components/parameters/source'
       responses:
         200:
           description: Retorna os municipios e se estes possuem queimadas
@@ -48,6 +50,8 @@ paths:
     get:
       tags:
         - Queimadas
+      parameters:
+        - $ref: '#/components/parameters/source'
       responses:
         200:
           description: Retorna os estados e se estes possuem queimadas
