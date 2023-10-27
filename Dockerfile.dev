@@ -13,4 +13,4 @@ ENV CRON=@daily
 
 EXPOSE 80
 
-CMD yarn scripts:municipios & yarn scripts:queimadas --cron $CRON & yarn install && yarn dev
+CMD yarn scripts:prepare && yarn dev
