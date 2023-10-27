@@ -5,6 +5,7 @@
     "editorconfig.editorconfig",
     "christian-kohler.npm-intellisense",
     "esbenp.prettier-vscode",
-    "yzhang.markdown-all-in-one"
+    "yzhang.markdown-all-in-one",
+    "42crunch.vscode-openapi"
   ]
 }
