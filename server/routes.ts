@@ -1,9 +1,12 @@
-import { Application } from 'express';
+import { Router } from 'express';
 import queimadasRouter from './api/controllers/queimadas/router';
 import mapasRouter from './api/controllers/mapas/router';
 
-export default function routes(app: Application): void {
-  app.use('/api/v1/queimadas', queimadasRouter);
-  app.use('/api/v1/mapas', mapasRouter);
-  app.get('/', (_, res) => res.redirect('/api-explorer'));
+export default function routes(): Router {
+  const app = Router();
+
+  app.use('/queimadas', queimadasRouter);
+  app.use('/mapas', mapasRouter);
+
+  return app;
 }

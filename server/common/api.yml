@@ -4,7 +4,7 @@ info:
   description: API que descreve as APIs oferecidas pelo serviço
   version: 0.1.0
 servers:
-  - url: /api/v1
+  - url: /api
 tags:
   - name: Mapas
     description: API para consulta de mapas

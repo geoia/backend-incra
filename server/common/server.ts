@@ -1,4 +1,4 @@
-import express, { Application } from 'express';
+import express, { Application, Router } from 'express';
 import path from 'path';
 import bodyParser from 'body-parser';
 import http from 'http';
@@ -14,7 +14,6 @@ import * as OpenApiValidator from 'express-openapi-validator';
 const app = express();
 
 export default class ExpressServer {
-  private routes: (app: Application) => void;
   constructor() {
     app.use(bodyParser.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
     app.use(compression());
@@ -27,14 +26,16 @@ export default class ExpressServer {
     );
     app.use(bodyParser.text({ limit: process.env.REQUEST_LIMIT || '100kb' }));
     app.use(cookieParser(process.env.SESSION_SECRET));
-    app.use(express.static(`${path.normalize(__dirname + '/../..')}/public`));
+
+    app.use('/docs', express.static(`${path.normalize(__dirname + '/../..')}/public/api-explorer`));
+    app.get('/', (_, res) => res.redirect('/docs'));
 
     const apiSpec = path.join(__dirname, 'api.yml');
     const validateResponses = !!(
       process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION &&
       process.env.OPENAPI_ENABLE_RESPONSE_VALIDATION.toLowerCase() === 'true'
     );
-    app.use(process.env.OPENAPI_SPEC || '/spec', express.static(apiSpec));
+    app.use('/api/spec', express.static(apiSpec));
     app.use(
       OpenApiValidator.middleware({
         apiSpec,
@@ -44,8 +45,8 @@ export default class ExpressServer {
     );
   }
 
-  router(routes: (app: Application) => void): ExpressServer {
-    routes(app);
+  router(routes: () => Router): ExpressServer {
+    app.use('/api', routes());
     app.use(errorHandler);
     return this;
   }
