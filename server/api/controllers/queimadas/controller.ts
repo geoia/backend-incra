@@ -7,7 +7,10 @@ async function find(req: Request, res: Response) {
 
   const source = req.params.source?.toString();
 
-  const result = await entidadesComDados(criteria, source === 'latest' ? undefined : source);
+  const result = await entidadesComDados(criteria, {
+    source: source === 'latest' ? undefined : source,
+    full: req.query.full?.toString() === 'true',
+  });
 
   return res.status(result ? 200 : 204).send(result);
 }

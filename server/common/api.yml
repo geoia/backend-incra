@@ -52,6 +52,7 @@ paths:
         - Queimadas
       parameters:
         - $ref: '#/components/parameters/source'
+        - $ref: '#/components/parameters/full'
       responses:
         200:
           description: Retorna os municipios e se estes possuem queimadas
@@ -78,6 +79,7 @@ paths:
         - Queimadas
       parameters:
         - $ref: '#/components/parameters/source'
+        - $ref: '#/components/parameters/full'
       responses:
         200:
           description: Retorna os estados e se estes possuem queimadas
@@ -151,3 +153,10 @@ components:
         type: string
         default: latest
       required: true
+    full:
+      in: query
+      name: full
+      schema:
+        type: boolean
+        default: false
+      required: false
