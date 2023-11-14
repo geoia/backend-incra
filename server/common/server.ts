@@ -18,6 +18,7 @@ export default class ExpressServer {
     app.use(bodyParser.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
     app.use(compression());
     app.use(helmet.hidePoweredBy());
+    app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
     app.use(
       bodyParser.urlencoded({
         extended: true,
