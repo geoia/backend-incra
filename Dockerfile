@@ -15,7 +15,7 @@ ENV PORT=80
 ENV GDAL=local
 ENV CRON=@daily
 
-VOLUME /usr/src/app/shapefiles
+# VOLUME /usr/src/app/shapefiles
 
 EXPOSE 80
 
