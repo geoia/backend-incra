@@ -15,8 +15,6 @@ ENV PORT=80
 ENV GDAL=local
 ENV CRON=@daily
 
-# VOLUME /usr/src/app/shapefiles
-
 EXPOSE 80
 
-CMD yarn scripts:queimadas --cron $CRON & yarn start
+CMD yarn start
