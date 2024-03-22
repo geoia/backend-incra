@@ -7,11 +7,11 @@ import dayjs from 'dayjs';
 import utcPlugin from 'dayjs/plugin/utc';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Knex } from 'knex';
-import ogr2ogr from './ogr2ogr';
+import ogr2ogr from '../server/common/utils/ogr2ogr';
 import { CronJob } from 'cron';
 import { Command, Option, program } from 'commander';
 import MultiSelect from 'enquirer/lib/prompts/multiselect';
-import { makeValid, normalizeSRID } from './utils';
+import { makeValid, normalizeSRID } from '../server/common/utils/normalizeSRID';
 
 dayjs.extend(utcPlugin);
 dayjs.extend(relativeTime);

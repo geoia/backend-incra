@@ -1,6 +1,6 @@
 import { exec } from 'node:child_process';
 import { resolve } from 'node:path';
-import knex from '../server/common/knex';
+import knex from '../knex';
 
 type Ogr2OgrOpts = {
   table?: string;
@@ -9,12 +9,16 @@ type Ogr2OgrOpts = {
 };
 
 /***
- * Função que faz chamada de sistema para processamento de arquivos shapefile
+ * Função que faz cimport consola from 'consola';
+import axios from 'axios';
+import { each, mapSeries } from 'bluebird';
+import { join } from 'node:path';
+import ogr2ogr from './ogr2ogr';hamada de sistema para processamento de arquivos shapefile
  */
 export default async function ogr2ogr(path: string, opts?: Ogr2OgrOpts) {
   const normalizedOpts = Object.assign({ overwrite: true, progress: true }, opts || {});
 
-  const mapasDir = resolve(__dirname, '..', 'shapefiles');
+  const mapasDir = resolve(__dirname, '../../../shapefiles');
   const { PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE } = process.env;
 
   const filePath = resolve(mapasDir, path);
