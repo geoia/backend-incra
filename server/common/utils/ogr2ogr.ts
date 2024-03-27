@@ -9,11 +9,7 @@ type Ogr2OgrOpts = {
 };
 
 /***
- * Função que faz cimport consola from 'consola';
-import axios from 'axios';
-import { each, mapSeries } from 'bluebird';
-import { join } from 'node:path';
-import ogr2ogr from './ogr2ogr';hamada de sistema para processamento de arquivos shapefile
+ * Função que faz chamada de sistema para processamento de arquivos shapefile
  */
 export default async function ogr2ogr(path: string, opts?: Ogr2OgrOpts) {
   const normalizedOpts = Object.assign({ overwrite: true, progress: true }, opts || {});
