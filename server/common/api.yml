@@ -10,6 +10,8 @@ tags:
     description: API para consulta de mapas
   - name: Queimadas
     description: API para consulta de dados de queimadas
+  - name: Scripts
+    description: API para executar scripts que preparam o ambiente.
   - name: Specification
     description: The swagger API specification
 paths:
@@ -100,6 +102,24 @@ paths:
           description: Retorna dados de queimadas do estado no formato GeoJson
         204:
           description: Não existem dados para a consulta
+  /scripts/download-mapas:
+    post:
+      tags:
+        - Scripts
+      parameters:
+        - $ref: '#/components/parameters/override'
+      responses:
+        201:
+          description: Script foi iniciado de forma assincrona
+  /scripts/populate-municipios:
+    post:
+      tags:
+        - Scripts
+      parameters:
+        - $ref: '#/components/parameters/override'
+      responses:
+        201:
+          description: Script foi iniciado de forma assincrona
   /spec:
     get:
       tags:
@@ -156,6 +176,13 @@ components:
     full:
       in: query
       name: full
+      schema:
+        type: boolean
+        default: false
+      required: false
+    override:
+      in: query
+      name: override
       schema:
         type: boolean
         default: false

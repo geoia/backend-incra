@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 
-import knex from '../server/common/knex';
+import knex from '../knex';
 
 /***
  * Função para normalização de referências espaciais.

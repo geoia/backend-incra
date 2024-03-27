@@ -1,6 +1,6 @@
 import { exec } from 'node:child_process';
 import { resolve } from 'node:path';
-import knex from '../server/common/knex';
+import knex from '../knex';
 
 type Ogr2OgrOpts = {
   table?: string;
@@ -14,7 +14,7 @@ type Ogr2OgrOpts = {
 export default async function ogr2ogr(path: string, opts?: Ogr2OgrOpts) {
   const normalizedOpts = Object.assign({ overwrite: true, progress: true }, opts || {});
 
-  const mapasDir = resolve(__dirname, '..', 'shapefiles');
+  const mapasDir = resolve(__dirname, '../../../shapefiles');
   const { PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE } = process.env;
 
   const filePath = resolve(mapasDir, path);
