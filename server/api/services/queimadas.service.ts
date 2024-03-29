@@ -2,6 +2,8 @@ import L from '../../common/logger';
 import knex from '../../common/knex';
 import { isNil, negate } from 'lodash';
 import formatter from '../../common/utils/formatter';
+import { resolve, extname} from 'node:path';
+import extract from 'decompress';
 
 const isNotNil = negate(isNil);
 
@@ -82,4 +84,11 @@ export async function queimadas(opts: HandlerOpts) {
   return JSON.parse(rows[0].geojson);
 }
 
-export default { count, sources, queimadas };
+export function saveContent(tempFilePath: string) {
+  const dest: string = resolve(__dirname, '..', '..', '..', 'shapefiles', 'queimadas'); 
+  return extract(tempFilePath, dest, {
+    filter: file => ['.shx', '.shp', '.qmd', '.prj', '.dbf', '.cpg'].includes(extname(file.path))
+  });
+}
+
+export default { count, sources, queimadas, saveContent };
