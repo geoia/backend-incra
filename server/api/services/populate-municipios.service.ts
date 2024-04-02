@@ -146,6 +146,6 @@ async function populateMapasMunicipios(override?: boolean) {
 }
 
 export async function populateMunicipios(override?: boolean) {
-  await each([populateDadosMunicipios, populateMapasMunicipios], (f) => f(override));
+  await each([populateDadosMunicipios, populateMapasMunicipios], (f) => f(override)).finally(() => knex.destroy());
   consola.success('Processo concluído com sucesso!');
 }
