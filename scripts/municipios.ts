@@ -6,6 +6,6 @@ import { populateMunicipios } from '../server/api/services/populate-municipios.s
 if (require.main === module) {
   program
     .addOption(new Option('--override', 'Override existing information on database.'))
-    .action(async (opts: { override?: boolean }) => populateMunicipios(opts.override).then(() => knex.destroy()))
+    .action(async (opts: { override?: boolean }) => populateMunicipios(opts.override))
     .parseAsync(process.argv);
 }
