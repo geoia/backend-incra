@@ -37,7 +37,7 @@ paths:
           description: Retorna dados de queimadas do municipio no formato GeoJson
         204:
           description: Não existem dados para a consulta
-  
+
   /queimadas/upload:
     post:
       tags:
@@ -55,7 +55,7 @@ paths:
           description: Arquivo não foi enviado!
         500:
           description: Erro ao descompactar o arquivo!
-  
+
   /queimadas/sources:
     get:
       tags:
@@ -65,7 +65,7 @@ paths:
           description: Retorna a lista fontes com dados sobre queimadas no formato YYYYMM
         204:
           description: Não existem dados para a consulta
-  
+
   /queimadas/{source}/municipios:
     get:
       tags:
@@ -156,15 +156,6 @@ paths:
       responses:
         201:
           description: Script foi iniciado de forma assincrona
-  /scripts/queimadas/prefixes:
-    get:
-      tags:
-        - Scripts
-      responses:
-        200:
-          description: Prefixos
-        204:
-          description: Não há prefixos cadastrados
     delete:
       tags:
         - Scripts
@@ -175,7 +166,15 @@ paths:
           description: Deletado
         400:
           description: Prefixo não foi enviado ou não está cadastrado
-
+  /scripts/queimadas/prefixes:
+    get:
+      tags:
+        - Scripts
+      responses:
+        200:
+          description: Prefixos
+        204:
+          description: Não há prefixos cadastrados
   /spec:
     get:
       tags:

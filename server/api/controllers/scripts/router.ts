@@ -6,5 +6,5 @@ export default Router()
   .post('/populate-municipios', controller.populateMunicipiosController)
   .post('/queimadas', controller.queimadasExecController)
   .get('/queimadas/prefixes', controller.queimadasGetPrefixesController)
-  .delete('/queimadas/prefixes', controller.queimadasDeleteController)
+  .delete('/queimadas', controller.queimadasDeleteController)
   .post('/queimadas/cron', controller.queimadasCronExecController);
