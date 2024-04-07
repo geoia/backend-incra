@@ -66,14 +66,14 @@ async function get(req: Request, res: Response) {
 }
 
 async function upload(req: Request, res: Response) {
-  const file: Express.Multer.File | undefined = req.file
-  if(!file){
-    return res.status(400).json({message : 'Nenhum arquivo foi enviado.'});
+  const file: Express.Multer.File | undefined = req.file;
+  if (!file) {
+    return res.status(400).json({ message: 'Nenhum arquivo foi enviado.' });
   }
   await saveContent(file.path).catch(() => {
-    return res.status(500).json({message : 'Erro ao descompactar arquivos.'});
+    return res.status(500).json({ message: 'Erro ao descompactar arquivos.' });
   });
-  return res.status(201).json({message : 'Arquivo salvo.'});
+  return res.status(201).json({ message: 'Arquivo salvo.' });
 }
 
 export default { get, getSources, find, upload };

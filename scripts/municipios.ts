@@ -1,7 +1,6 @@
-import knex from '../server/common/knex';
 import { Option, program } from 'commander';
 
-import { populateMunicipios } from '../server/api/services/populate-municipios.service'
+import { populateMunicipios } from '../server/api/services/populate-municipios.service';
 
 if (require.main === module) {
   program

@@ -1,8 +1,12 @@
 import knex from '../server/common/knex';
 import { Command, Option, program } from 'commander';
 import MultiSelect from 'enquirer/lib/prompts/multiselect';
-import {cronExec, exec, execDelete, getPrefixes} from '../server/api/services/process-queimadas.service'
-
+import {
+  cronExec,
+  exec,
+  execDelete,
+  getPrefixes,
+} from '../server/api/services/process-queimadas.service';
 
 if (require.main === module) {
   program
@@ -20,7 +24,7 @@ if (require.main === module) {
     .addCommand(
       new Command('delete').action(async () => {
         const prefixes: Array<{ prefix: string }> = await getPrefixes();
-        
+
         const prompt = new MultiSelect({
           message: 'Select prefixes to remove',
           limit: 5,
@@ -28,7 +32,6 @@ if (require.main === module) {
         });
 
         return execDelete(await prompt.run()).then(() => knex.destroy());
-        
       })
     )
     .parseAsync(process.argv);

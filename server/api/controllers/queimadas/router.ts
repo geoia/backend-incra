@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import controller from './controller';
 import multer from 'multer';
-import os from 'os'
+import os from 'os';
 
 const upload = multer({ dest: os.tmpdir() });
 
