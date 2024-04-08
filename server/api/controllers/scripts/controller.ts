@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { downloadMapas } from '../../services/download-mapas.service';
 import { populateMunicipios } from '../../services/populate-municipios.service';
 import { exec, getPrefixes, execDelete } from '../../services/process-queimadas.service';
+import { saveContent } from '../../services/upload-queimadas.service';
 
 async function downloadMapasController(req: Request, res: Response) {
   const override: boolean = Boolean(req.query.override) || false;
@@ -36,9 +37,21 @@ async function queimadasDeleteController(req: Request, res: Response) {
   return res.status(200).send({ message: 'Deletado!' });
 }
 
+async function upload(req: Request, res: Response) {
+  const file: Express.Multer.File | undefined = req.file;
+  if (!file) {
+    return res.status(400).json({ message: 'Nenhum arquivo foi enviado.' });
+  }
+  await saveContent(file.path).catch(() => {
+    return res.status(500).json({ message: 'Erro ao descompactar arquivos.' });
+  });
+  return res.status(201).json({ message: 'Arquivo salvo.' });
+}
+
 export default {
   downloadMapasController,
   populateMunicipiosController,
   queimadasExecController,
   queimadasDeleteController,
+  upload,
 };

@@ -38,24 +38,6 @@ paths:
         204:
           description: Não existem dados para a consulta
 
-  /queimadas/upload:
-    post:
-      tags:
-        - Queimadas
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/zipfile'
-      responses:
-        201:
-          description: Arquivo foi salvo e descompactado com sucesso!
-        400:
-          description: Arquivo não foi enviado!
-        500:
-          description: Erro ao descompactar o arquivo!
-
   /queimadas/sources:
     get:
       tags:
@@ -138,6 +120,23 @@ paths:
       responses:
         202:
           description: Script foi iniciado de forma assincrona
+  /scripts/queimadas/upload:
+    post:
+      tags:
+        - Scripts
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/zipfile'
+      responses:
+        201:
+          description: Arquivo foi salvo e descompactado com sucesso!
+        400:
+          description: Arquivo não foi enviado!
+        500:
+          description: Erro ao descompactar o arquivo!
   /scripts/queimadas:
     post:
       tags:

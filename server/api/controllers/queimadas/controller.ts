@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { queimadas, count, sources, saveContent } from '../../services/queimadas.service';
+import { queimadas, count, sources } from '../../services/queimadas.service';
 import { entidadesComDados } from '../../services/mapas.service';
 
 async function find(req: Request, res: Response) {
@@ -65,15 +65,4 @@ async function get(req: Request, res: Response) {
   return partialResponse.send(result);
 }
 
-async function upload(req: Request, res: Response) {
-  const file: Express.Multer.File | undefined = req.file;
-  if (!file) {
-    return res.status(400).json({ message: 'Nenhum arquivo foi enviado.' });
-  }
-  await saveContent(file.path).catch(() => {
-    return res.status(500).json({ message: 'Erro ao descompactar arquivos.' });
-  });
-  return res.status(201).json({ message: 'Arquivo salvo.' });
-}
-
-export default { get, getSources, find, upload };
+export default { get, getSources, find };
