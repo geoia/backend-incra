@@ -10,8 +10,6 @@ import { CronJob } from 'cron';
 import knex from '../../common/knex';
 import ogr2ogr from '../../common/utils/ogr2ogr';
 import { makeValid, normalizeSRID } from '../../common/utils/normalizeSRID';
-import { privateEncrypt } from 'crypto';
-import { syncBuiltinESMExports } from 'module';
 
 dayjs.extend(utcPlugin);
 dayjs.extend(relativeTime);
@@ -82,10 +80,8 @@ function filesList(): ShapefileData[] {
       return { dirname, shapefiles, prefix: `${year}${month}`, name: (name || '').slice(1).trim() };
     })
     .filter((data) => data !== undefined) as ShapefileData[];
-    consola.log(data.length + " TAMANHO")
   return data.sort((a, b) => a.prefix.localeCompare(b.prefix));
 }
-
 
 /***
  * Função principal que:
@@ -101,7 +97,6 @@ export async function exec() {
       data
     )
   );
-
 
   // processa shapefiles armazenados no diretório
   await each(shapefiles, async (data) => {
@@ -224,10 +219,8 @@ export async function execDelete(prefixes: string[], trx?: Knex.Transaction) {
     });
 }
 
-export async function getPrefixes(): Promise<{ prefix: string; }[]>{
-  return await knex
-  .select('prefix')
-  .from('public.mapas_queimadas_historico');
+export async function getPrefixes(): Promise<{ prefix: string }[]> {
+  return await knex.select('prefix').from('public.mapas_queimadas_historico');
 }
 
-export default { execDelete, cronExec, exec, getPrefixes }
+export default { execDelete, cronExec, exec, getPrefixes };
