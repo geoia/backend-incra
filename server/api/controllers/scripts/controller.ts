@@ -1,23 +1,23 @@
 import { Request, Response } from 'express';
 import { downloadMapas } from '../../services/download-mapas.service';
 import { populateMunicipios } from '../../services/populate-municipios.service';
-import { exec, cronExec, getPrefixes, execDelete } from '../../services/process-queimadas.service';
+import { exec, getPrefixes, execDelete } from '../../services/process-queimadas.service';
 
 async function downloadMapasController(req: Request, res: Response) {
   const override: boolean = Boolean(req.query.override) || false;
   downloadMapas(override);
-  return res.status(201).json({ message: 'script iniciado com sucesso!' });
+  return res.status(202).json({ message: 'script iniciado com sucesso!' });
 }
 
 async function populateMunicipiosController(req: Request, res: Response) {
   const override: boolean = Boolean(req.query.override) || false;
   populateMunicipios(override);
-  return res.status(201).json({ message: 'script iniciado com sucesso!' });
+  return res.status(202).json({ message: 'script iniciado com sucesso!' });
 }
 
 async function queimadasExecController(_req: Request, res: Response) {
   exec();
-  return res.status(201).json({ message: 'script iniciado com sucesso!' });
+  return res.status(202).json({ message: 'script iniciado com sucesso!' });
 }
 
 async function queimadasDeleteController(req: Request, res: Response) {

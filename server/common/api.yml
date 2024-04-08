@@ -127,7 +127,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/override'
       responses:
-        201:
+        202:
           description: Script foi iniciado de forma assincrona
   /scripts/populate-municipios:
     post:
@@ -136,14 +136,14 @@ paths:
       parameters:
         - $ref: '#/components/parameters/override'
       responses:
-        201:
+        202:
           description: Script foi iniciado de forma assincrona
   /scripts/queimadas:
     post:
       tags:
         - Scripts
       responses:
-        201:
+        202:
           description: Script foi iniciado de forma assincrona
     delete:
       tags:
