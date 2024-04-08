@@ -20,26 +20,6 @@ async function queimadasExecController(_req: Request, res: Response) {
   return res.status(201).json({ message: 'script iniciado com sucesso!' });
 }
 
-async function queimadasCronExecController(req: Request, res: Response) {
-  const cron_time: string | undefined = req.query.cron_time?.toString();
-  if (!cron_time) {
-    return res.status(400).json({ message: 'Contrab time não enviado!' });
-  }
-  cronExec(cron_time);
-  return res.status(201).json({ message: 'Agendamento cadastrado!' });
-}
-
-async function queimadasGetPrefixesController(_req: Request, res: Response) {
-  const prefixes: Array<string> = await getPrefixes().then((resp) =>
-    resp.map((prefixObj) => prefixObj.prefix)
-  );
-
-  if (prefixes.length < 1) {
-    return res.status(204).send({ message: 'Não há prefixos cadastrados' });
-  }
-
-  return res.status(200).send({ prefixes: prefixes });
-}
 async function queimadasDeleteController(req: Request, res: Response) {
   const prefixes: Array<string> = await getPrefixes().then((resp) =>
     resp.map((prefixObj) => prefixObj.prefix)
@@ -60,7 +40,5 @@ export default {
   downloadMapasController,
   populateMunicipiosController,
   queimadasExecController,
-  queimadasCronExecController,
-  queimadasGetPrefixesController,
   queimadasDeleteController,
 };

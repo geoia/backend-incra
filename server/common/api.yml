@@ -138,17 +138,6 @@ paths:
       responses:
         201:
           description: Script foi iniciado de forma assincrona
-  /scripts/queimadas/cron:
-    post:
-      tags:
-        - Scripts
-      parameters:
-        - $ref: '#/components/parameters/cron_time'
-      responses:
-        201:
-          description: Agendamento cadastrado
-        400:
-          description: Parametro cron_time não foi enviado
   /scripts/queimadas:
     post:
       tags:
@@ -166,15 +155,6 @@ paths:
           description: Deletado
         400:
           description: Prefixo não foi enviado ou não está cadastrado
-  /scripts/queimadas/prefixes:
-    get:
-      tags:
-        - Scripts
-      responses:
-        200:
-          description: Prefixos
-        204:
-          description: Não há prefixos cadastrados
   /spec:
     get:
       tags:
@@ -242,12 +222,6 @@ components:
         type: boolean
         default: false
       required: false
-    cron_time:
-      in: query
-      name: cron_time
-      schema:
-        type: string
-      required: true
     prefix:
       in: query
       name: prefix
