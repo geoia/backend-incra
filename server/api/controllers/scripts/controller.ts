@@ -42,10 +42,13 @@ async function upload(req: Request, res: Response) {
   if (!file) {
     return res.status(400).json({ message: 'Nenhum arquivo foi enviado.' });
   }
-  await saveContent(file.path).catch(() => {
-    return res.status(500).json({ message: 'Erro ao descompactar arquivos.' });
-  });
-  return res.status(201).json({ message: 'Arquivo salvo.' });
+
+  try {
+    await saveContent(file.path);
+    return res.status(201).json({ message: 'Arquivo salvo.' });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
 }
 
 export default {

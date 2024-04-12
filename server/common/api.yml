@@ -134,7 +134,7 @@ paths:
         201:
           description: Arquivo foi salvo e descompactado com sucesso!
         400:
-          description: Arquivo não foi enviado!
+          description: Arquivo não foi enviado ou algum diretório não segue o padrão de nome definido
         500:
           description: Erro ao descompactar o arquivo!
   /scripts/queimadas:
