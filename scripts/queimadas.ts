@@ -17,7 +17,7 @@ if (require.main === module) {
         )
         .action(async (opts: { cron?: string }) => {
           if (opts.cron) cronExec(opts.cron);
-          else await exec().then(() => knex.destroy());
+          else await exec();
         }),
       { isDefault: true }
     )
@@ -31,8 +31,9 @@ if (require.main === module) {
           choices: prefixes.map(({ prefix }) => prefix),
         });
 
-        return execDelete(await prompt.run()).then(() => knex.destroy());
+        return execDelete(await prompt.run());
       })
     )
-    .parseAsync(process.argv);
+    .parseAsync(process.argv)
+    .finally(() => knex.destroy());
 }
