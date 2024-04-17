@@ -98,6 +98,11 @@ export async function exec() {
     )
   );
 
+  if (shapefiles.length === 0) {
+    consola.warn('Nenhum shapefile encontrado.');
+    return;
+  }
+
   // processa shapefiles armazenados no diretório
   await each(shapefiles, async (data) => {
     consola.info(`Iniciando processamento de ${data.dirname}...`);
