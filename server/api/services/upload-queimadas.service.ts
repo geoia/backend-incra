@@ -3,10 +3,21 @@ import extract from 'decompress';
 import os from 'os';
 import glob from 'glob';
 import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'node:crypto';
 
 interface FilesUUIDS {
   [key: string]: string;
+}
+
+// Função para calcular o checksum de um arquivo
+function checksum(file: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('sha1').setEncoding('hex');
+    fs.createReadStream(file)
+      .pipe(hash)
+      .on('finish', () => resolve(hash.read()))
+      .on('error', reject);
+  });
 }
 
 // Remove os arquivos temporários
@@ -34,16 +45,26 @@ async function mover_arquivos(tempFilePath: string, tempDest: string) {
       break;
     }
 
-    let filesUUIDS: FilesUUIDS = {};
+    const shapefiles = glob.sync('*.shp', { cwd: resolve(tempDest, dirname) });
+
+    const checksums = await Promise.all(
+      shapefiles.map((fileName) => checksum(resolve(tempDest, dirname, fileName)))
+    );
+
+    const filesUUIDS: FilesUUIDS = checksums.reduce((acc, checksum, index) => {
+      const name = shapefiles[index].split('.')[0];
+      return { ...acc, [name]: checksum };
+    }, {});
 
     const files = glob.sync('*', { cwd: resolve(tempDest, dirname) });
 
-    files.map((fileName) => {
-      const name = fileName.split('.')[0];
-      const ext = fileName.split('.')[1];
+    files.forEach((fileName) => {
+      const [name, ext] = fileName.split('.');
 
+      // TODO - remove arquivos que não possuem .shp associado, verificar se é realmente necessário
       if (!filesUUIDS[name]) {
-        filesUUIDS = { ...filesUUIDS, [name]: uuidv4() };
+        fs.rmSync(resolve(tempDest, dirname, fileName));
+        return;
       }
 
       fs.renameSync(
