@@ -8,7 +8,7 @@ export default function routes(): Router {
 
   app.use('/queimadas', queimadasRouter);
   app.use('/mapas', mapasRouter);
-  app.use('/scripts', scriptsRouter)
+  app.use('/scripts', scriptsRouter);
 
   return app;
 }

@@ -37,7 +37,7 @@ paths:
           description: Retorna dados de queimadas do municipio no formato GeoJson
         204:
           description: Não existem dados para a consulta
-  
+
   /queimadas/sources:
     get:
       tags:
@@ -47,7 +47,7 @@ paths:
           description: Retorna a lista fontes com dados sobre queimadas no formato YYYYMM
         204:
           description: Não existem dados para a consulta
-  
+
   /queimadas/{source}/municipios:
     get:
       tags:
@@ -109,7 +109,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/override'
       responses:
-        201:
+        202:
           description: Script foi iniciado de forma assincrona
   /scripts/populate-municipios:
     post:
@@ -118,8 +118,42 @@ paths:
       parameters:
         - $ref: '#/components/parameters/override'
       responses:
-        201:
+        202:
           description: Script foi iniciado de forma assincrona
+  /scripts/queimadas/upload:
+    post:
+      tags:
+        - Scripts
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/zipfile'
+      responses:
+        201:
+          description: Arquivo foi salvo e descompactado com sucesso!
+        400:
+          description: Arquivo não foi enviado ou algum diretório não segue o padrão de nome definido
+        500:
+          description: Erro ao descompactar o arquivo!
+  /scripts/queimadas:
+    post:
+      tags:
+        - Scripts
+      responses:
+        202:
+          description: Script foi iniciado de forma assincrona
+    delete:
+      tags:
+        - Scripts
+      parameters:
+        - $ref: '#/components/parameters/prefix'
+      responses:
+        200:
+          description: Deletado
+        400:
+          description: Prefixo não foi enviado ou não está cadastrado
   /spec:
     get:
       tags:
@@ -187,3 +221,17 @@ components:
         type: boolean
         default: false
       required: false
+    prefix:
+      in: query
+      name: prefix
+      schema:
+        type: string
+      required: true
+  schemas:
+    zipfile:
+      type: object
+      properties:
+        zipfile:
+          type: string
+          format: binary
+          description: Arquivo zip contendo os shapefiles separados por pastas no formato YYYYMM
