@@ -104,6 +104,8 @@ paths:
           description: Não existem dados para a consulta
   /scripts/download-mapas:
     post:
+      security:
+        - BasicAuth: []
       tags:
         - Scripts
       parameters:
@@ -111,8 +113,12 @@ paths:
       responses:
         202:
           description: Script foi iniciado de forma assincrona
+        401:
+          description: Credenciais inválidas ou não fornecidas.
   /scripts/populate-municipios:
     post:
+      security:
+        - BasicAuth: []
       tags:
         - Scripts
       parameters:
@@ -120,8 +126,12 @@ paths:
       responses:
         202:
           description: Script foi iniciado de forma assincrona
+        401:
+          description: Credenciais inválidas ou não fornecidas.
   /scripts/queimadas/upload:
     post:
+      security:
+        - BasicAuth: []
       tags:
         - Scripts
       requestBody:
@@ -133,18 +143,26 @@ paths:
       responses:
         201:
           description: Arquivo foi salvo e descompactado com sucesso!
+        401:
+          description: Credenciais inválidas ou não fornecidas.
         400:
           description: Arquivo não foi enviado ou algum diretório não segue o padrão de nome definido
         500:
           description: Erro ao descompactar o arquivo!
   /scripts/queimadas:
     post:
+      security:
+        - BasicAuth: []
       tags:
         - Scripts
       responses:
         202:
           description: Script foi iniciado de forma assincrona
+        401:
+          description: Credenciais inválidas ou não fornecidas.
     delete:
+      security:
+        - BasicAuth: []
       tags:
         - Scripts
       parameters:
@@ -154,6 +172,8 @@ paths:
           description: Deletado
         400:
           description: Prefixo não foi enviado ou não está cadastrado
+        401:
+          description: Credenciais inválidas ou não fornecidas.
   /spec:
     get:
       tags:
@@ -161,7 +181,13 @@ paths:
       responses:
         200:
           description: Return the API specification
+
 components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
   parameters:
     municipio_id:
       in: path
