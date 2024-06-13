@@ -54,10 +54,12 @@ export default class ExpressServer {
   }
 
   listen(port: number): Application {
+    if (!process.env.ADM_USER || !process.env.ADM_PASS) {
+      throw 'Usuário admin não configurado.';
+    }
     const welcome = (p: number) => (): void =>
       l.info(
-        `up and running in ${
-          process.env.NODE_ENV || 'development'
+        `up and running in ${process.env.NODE_ENV || 'development'
         } @: ${os.hostname()} on port: ${p}}`
       );
 
