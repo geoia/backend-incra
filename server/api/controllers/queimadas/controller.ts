@@ -24,7 +24,7 @@ async function getSources(_: Request, res: Response) {
 async function get(req: Request, res: Response) {
   const criteria = {
     municipio: req.params.municipio ? parseInt(req.params.municipio) : undefined,
-    estado: req.params.municipio ? parseInt(req.params.estado) : undefined,
+    estado: req.params.estado ? parseInt(req.params.estado) : undefined,
     bioma: req.params.bioma || undefined,
   } as Parameters<typeof count>[0];
 
