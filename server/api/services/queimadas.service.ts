@@ -1,9 +1,6 @@
 import L from '../../common/logger';
 import knex from '../../common/knex';
-import { isNil, negate } from 'lodash';
 import formatter from '../../common/utils/formatter';
-
-const isNotNil = negate(isNil);
 
 type BaseHandlerOpts = {
   detailed?: boolean;
@@ -11,17 +8,26 @@ type BaseHandlerOpts = {
   page?: number;
 };
 
-type LocaleOpts = { source?: string; municipio?: number; estado?: number } & (
+type LocaleOpts = { source?: string; municipio?: number; estado?: number; bioma?: string } & (
   | { municipio: number }
   | { estado: number }
+  | { bioma: string }
 );
 
 type HandlerOpts = BaseHandlerOpts & LocaleOpts;
 
 export async function count(opts: LocaleOpts) {
-  const { municipio, estado } = opts;
+  const { municipio, estado, bioma } = opts;
 
-  const [mapa, id] = isNotNil(estado) ? ['mapas_estados', estado] : ['mapas_municipios', municipio];
+  let type: 'municipio' | 'estado' | 'bioma';
+
+  if (municipio) type = 'municipio';
+  else if (estado) type = 'estado';
+  else if (bioma) type = 'bioma';
+  else throw new Error('Nenhum critério de busca foi fornecido');
+
+  const mapa = `mapas_${type}s`;
+  const id = municipio || estado || `'${bioma}'`;
 
   L.debug('Obtendo contagem de queimadas usando "%s"...', formatter.object({ mapa, id }));
   const { rows } = await knex.raw(
@@ -48,14 +54,23 @@ function ensureValue(value: number | undefined, min: number, max?: number) {
 
 // handler do nextjs
 export async function queimadas(opts: HandlerOpts) {
-  const { municipio, estado, detailed } = opts;
+  const { municipio, estado, bioma, detailed } = opts;
 
   let { page, limit } = opts;
 
   page = ensureValue(page, 1);
   limit = ensureValue(limit, 100);
 
-  const [mapa, id] = isNotNil(estado) ? ['mapas_estados', estado] : ['mapas_municipios', municipio];
+  let type: 'municipio' | 'estado' | 'bioma';
+
+  if (municipio) type = 'municipio';
+  else if (estado) type = 'estado';
+  else if (bioma) type = 'bioma';
+  else throw new Error('Nenhum critério de busca foi fornecido');
+
+  const mapa = `mapas_${type}s`;
+  const id = municipio || estado || `'${bioma}'`;
+
   const table = `mapas_queimadas${opts.source ? `_${opts.source}` : ''}`;
 
   L.debug(

@@ -125,6 +125,21 @@ paths:
           description: Retorna os biomas e se estes possuem queimadas
         204:
           description: Não existem dados para a consulta
+  /queimadas/{source}/biomas/{id}:
+    get:
+      tags:
+        - Queimadas
+      parameters:
+        - $ref: '#/components/parameters/source'
+        - $ref: '#/components/parameters/bioma'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/detailed'
+      responses:
+        200:
+          description: Retorna dados de queimadas do bioma no formato GeoJson
+        204:
+          description: Não existem dados para a consulta
   /scripts/download-mapas:
     post:
       security:

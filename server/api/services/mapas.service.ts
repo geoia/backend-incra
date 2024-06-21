@@ -18,7 +18,7 @@ export async function entidadesComDados(
     `
     WITH queimadas AS (SELECT ST_Union(ST_Simplify(mq.wkb_geometry, 0.1, TRUE)) AS wkb_geometry FROM ${tableQueimadas} mq)
     SELECT DISTINCT ma.id, ${
-      type !== 'mapas_biomas' ? 'ma.nome, ma.sigla, ' : ''
+      type !== 'mapas_biomas' ? 'ma.nome, ma.sigla, ' : 'ma.bioma,'
     } (mq.wkb_geometry IS NOT NULL) as queimadas 
       FROM ${type} ma ${joinMode} JOIN queimadas mq ON ST_Intersects(ma.wkb_geometry, mq.wkb_geometry)
     `
