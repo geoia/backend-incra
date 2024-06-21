@@ -220,6 +220,13 @@ components:
       schema:
         type: string
         example: pantanal
+        enum:
+          - amazonia
+          - caatinga
+          - cerrado
+          - mata_atlantica
+          - pampa
+          - pantanal
       required: true
     per_page:
       in: query
