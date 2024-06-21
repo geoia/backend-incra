@@ -8,4 +8,5 @@ export default Router()
   .get('/:source/municipios', cacheMiddleware('1 week'), controller.find)
   .get('/:source/municipios/:municipio', cacheMiddleware('1 week'), controller.get)
   .get('/:source/estados', cacheMiddleware('1 week'), controller.find)
-  .get('/:source/estados/:estado', cacheMiddleware('1 week'), controller.get);
+  .get('/:source/estados/:estado', cacheMiddleware('1 week'), controller.get)
+  .get('/:source/biomas', cacheMiddleware('1 week'), controller.find);

@@ -113,6 +113,18 @@ paths:
           description: Retorna dados de queimadas do estado no formato GeoJson
         204:
           description: Não existem dados para a consulta
+  /queimadas/{source}/biomas:
+    get:
+      tags:
+        - Queimadas
+      parameters:
+        - $ref: '#/components/parameters/source'
+        - $ref: '#/components/parameters/full'
+      responses:
+        200:
+          description: Retorna os biomas e se estes possuem queimadas
+        204:
+          description: Não existem dados para a consulta
   /scripts/download-mapas:
     post:
       security:

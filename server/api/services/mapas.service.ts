@@ -9,7 +9,7 @@ type HandlerOpts = { municipio?: number; estado?: number; bioma?: string } & (
 );
 
 export async function entidadesComDados(
-  type: 'mapas_municipios' | 'mapas_estados',
+  type: 'mapas_municipios' | 'mapas_estados' | 'mapas_biomas',
   opts: { source?: string; full?: boolean }
 ) {
   const tableQueimadas = `mapas_queimadas${opts.source ? `_${opts.source}` : ''}`;
@@ -17,7 +17,9 @@ export async function entidadesComDados(
   const { rowCount, rows } = await knex.raw(
     `
     WITH queimadas AS (SELECT ST_Union(ST_Simplify(mq.wkb_geometry, 0.1, TRUE)) AS wkb_geometry FROM ${tableQueimadas} mq)
-    SELECT DISTINCT ma.id, ma.nome, ma.sigla, (mq.wkb_geometry IS NOT NULL) as queimadas 
+    SELECT DISTINCT ma.id, ${
+      type !== 'mapas_biomas' ? 'ma.nome, ma.sigla, ' : ''
+    } (mq.wkb_geometry IS NOT NULL) as queimadas 
       FROM ${type} ma ${joinMode} JOIN queimadas mq ON ST_Intersects(ma.wkb_geometry, mq.wkb_geometry)
     `
   );
