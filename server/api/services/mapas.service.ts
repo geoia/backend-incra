@@ -1,16 +1,12 @@
 import L from '../../common/logger';
 import knex from '../../common/knex';
-import { isNil, negate } from 'lodash';
 import formatter from '../../common/utils/formatter';
 
-const isNotNil = negate(isNil);
-
-type LocaleOpts = { municipio?: number; estado?: number } & (
+type HandlerOpts = { municipio?: number; estado?: number; bioma?: string } & (
   | { municipio: number }
   | { estado: number }
+  | { bioma: string }
 );
-
-type HandlerOpts = LocaleOpts;
 
 export async function entidadesComDados(
   type: 'mapas_municipios' | 'mapas_estados',
@@ -33,9 +29,14 @@ export async function entidadesComDados(
 
 // handler do nextjs
 export async function mapas(opts: HandlerOpts) {
-  const { municipio, estado } = opts;
+  const { municipio, estado, bioma } = opts;
 
-  const [mapa, id] = isNotNil(estado) ? ['mapas_estados', estado] : ['mapas_municipios', municipio];
+  let mapa: string, id: number | string;
+
+  if (municipio) [mapa, id] = ['mapas_municipios', municipio];
+  else if (estado) [mapa, id] = ['mapas_estados', estado];
+  else if (bioma) [mapa, id] = ['mapas_biomas', `'${bioma}'`];
+  else throw new Error('Nenhum critério de busca foi fornecido');
 
   L.debug('Obtendo dados de queimadas usando "%s"...', formatter.object({ mapa, id }));
   const { rowCount, rows } = await knex.raw(
