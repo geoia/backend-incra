@@ -23,8 +23,8 @@ paths:
         - $ref: '#/components/parameters/municipio_id'
       responses:
         200:
-          description: Retorna dados de queimadas do municipio no formato GeoJson
-        204:
+          description: Retorna mapa do municipio no formato GeoJson
+        404:
           description: Não existem dados para a consulta
   /mapas/estado/{id}:
     get:
@@ -34,8 +34,19 @@ paths:
         - $ref: '#/components/parameters/estado_id'
       responses:
         200:
-          description: Retorna dados de queimadas do municipio no formato GeoJson
-        204:
+          description: Retorna mapa do estado no formato GeoJson
+        404:
+          description: Não existem dados para a consulta
+  /mapas/bioma/{id}:
+    get:
+      tags:
+        - Mapas
+      parameters:
+        - $ref: '#/components/parameters/bioma'
+      responses:
+        200:
+          description: Retorna mapa do bioma no formato GeoJson
+        404:
           description: Não existem dados para a consulta
 
   /queimadas/sources:
@@ -202,6 +213,20 @@ components:
       schema:
         type: integer
         example: 50
+      required: true
+    bioma:
+      in: path
+      name: id
+      schema:
+        type: string
+        example: pantanal
+        enum:
+          - amazonia
+          - caatinga
+          - cerrado
+          - mata_atlantica
+          - pampa
+          - pantanal
       required: true
     per_page:
       in: query

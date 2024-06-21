@@ -90,13 +90,14 @@ export async function populateDadosMunicipios(override?: boolean) {
 }
 
 async function populateMapasMunicipios(override?: boolean) {
-  const [hasMunicipios, hasEstados] = await Promise.all([
+  const [hasMunicipios, hasEstados, hasBiomas] = await Promise.all([
     knex.schema.withSchema('shapefiles').hasTable('br_municipios_2021'),
     knex.schema.withSchema('shapefiles').hasTable('br_uf_2021'),
+    knex.schema.withSchema('shapefiles').hasTable('biomas'),
   ]);
 
-  if (hasMunicipios && hasEstados && !override) {
-    consola.warn('Já existem mapas dos municipios e estados no banco!');
+  if (hasMunicipios && hasEstados && hasBiomas && !override) {
+    consola.warn('Já existem mapas dos municipios, estados e biomas no banco!');
     return;
   }
 
@@ -104,6 +105,7 @@ async function populateMapasMunicipios(override?: boolean) {
   await Promise.all([
     ogr2ogr(join('mapas', 'BR_Municipios_2021', 'BR_Municipios_2021.shp')),
     ogr2ogr(join('mapas', 'BR_UF_2021', 'BR_UF_2021.shp')),
+    ogr2ogr(join('mapas', 'Biomas', 'lm_bioma_250.shp')),
   ]);
 
   await knex.transaction(async (trx) => {
@@ -111,19 +113,25 @@ async function populateMapasMunicipios(override?: boolean) {
     await Promise.all([
       trx.schema.withSchema('public').dropTableIfExists('mapas_municipios'),
       trx.schema.withSchema('public').dropTableIfExists('mapas_estados'),
+      trx.schema.withSchema('public').dropTableIfExists('mapas_biomas'),
     ]);
 
     consola.info('Copiando dados das tabelas...');
     await Promise.all([
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_estados AS 
-        SELECT uf.cd_uf::integer AS id, uf.nm_uf AS nome, uf.sigla, uf.nm_regiao AS regiao, uf.wkb_geometry::geometry(polygon)
-        FROM shapefiles.br_uf_2021 uf
+        SELECT cd_uf::integer AS id, nm_uf AS nome, sigla, nm_regiao AS regiao, wkb_geometry::geometry(polygon)
+        FROM shapefiles.br_uf_2021
       `),
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_municipios AS 
-        SELECT uf.cd_mun::integer AS id, uf.nm_mun AS nome, uf.sigla, area_km2, uf.wkb_geometry::geometry(polygon)
-        FROM shapefiles.br_municipios_2021 uf
+        SELECT cd_mun::integer AS id, nm_mun AS nome, sigla, area_km2, wkb_geometry::geometry(polygon)
+        FROM shapefiles.br_municipios_2021
+      `),
+      trx.schema.withSchema('public').raw(`
+        CREATE TABLE public.mapas_biomas AS 
+        SELECT REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, bioma, wkb_geometry::geometry(polygon) 
+        FROM shapefiles.lm_bioma_250
       `),
     ]);
 
@@ -131,6 +139,7 @@ async function populateMapasMunicipios(override?: boolean) {
     await Promise.all([
       normalizeSRID('public.mapas_estados', 'wkb_geometry', { transaction: trx }),
       normalizeSRID('public.mapas_municipios', 'wkb_geometry', { transaction: trx }),
+      normalizeSRID('public.mapas_biomas', 'wkb_geometry', { transaction: trx }),
     ]);
 
     consola.info('Criando novos indices e chaves...');
@@ -139,6 +148,7 @@ async function populateMapasMunicipios(override?: boolean) {
       trx.schema
         .withSchema('public')
         .raw(`ALTER TABLE public.mapas_municipios ADD PRIMARY KEY (id)`),
+      trx.schema.withSchema('public').raw(`ALTER TABLE public.mapas_biomas ADD PRIMARY KEY (id)`),
     ]);
   });
 

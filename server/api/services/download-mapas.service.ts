@@ -20,6 +20,11 @@ export async function downloadMapas(override: boolean): Promise<void> {
       join(mapas, 'BR_UF_2021'),
       override
     ),
+    download(
+      'https://geoftp.ibge.gov.br/informacoes_ambientais/estudos_ambientais/biomas/vetores/Biomas_250mil.zip',
+      join(mapas, 'Biomas'),
+      override
+    ),
   ]);
 
   consola.success('Mapas baixados com sucesso!');
