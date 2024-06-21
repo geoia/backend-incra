@@ -3,7 +3,7 @@ import { queimadas, count, sources } from '../../services/queimadas.service';
 import { entidadesComDados } from '../../services/mapas.service';
 
 async function find(req: Request, res: Response) {
-  const criteria = req.url.includes('municipios') ? 'mapas_municipios' : 'mapas_estados';
+  const criteria = `mapas_${req.url.split('/').pop()}` as Parameters<typeof entidadesComDados>[0];
 
   const source = req.params.source?.toString();
 
@@ -20,9 +20,11 @@ async function getSources(_: Request, res: Response) {
 }
 
 async function get(req: Request, res: Response) {
-  const criteria = req.params.municipio
-    ? { municipio: parseInt(req.params.municipio) }
-    : { estado: parseInt(req.params.estado) };
+  const criteria = {
+    municipio: req.params.municipio ? parseInt(req.params.municipio) : undefined,
+    estado: req.params.municipio ? parseInt(req.params.estado) : undefined,
+    bioma: req.params.bioma || undefined,
+  } as Parameters<typeof count>[0];
 
   const queimadasCount = await count(criteria);
 
