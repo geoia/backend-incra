@@ -3,7 +3,9 @@ import { queimadas, count, sources } from '../../services/queimadas.service';
 import { entidadesComDados } from '../../services/mapas.service';
 
 async function find(req: Request, res: Response) {
-  const criteria = `mapas_${req.url.split('/').pop()}` as Parameters<typeof entidadesComDados>[0];
+  const criteria = `mapas_${req.url.split('?')[0].split('/').pop()}` as Parameters<
+    typeof entidadesComDados
+  >[0];
 
   const source = req.params.source?.toString();
 
