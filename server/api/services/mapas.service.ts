@@ -20,7 +20,7 @@ export async function entidadesComDados(
     SELECT DISTINCT ma.id, ${
       type !== 'mapas_biomas' ? 'ma.nome, ma.sigla, ' : 'ma.bioma,'
     } (mq.wkb_geometry IS NOT NULL) as queimadas 
-      FROM ${type} ma ${joinMode} JOIN queimadas mq ON ST_Intersects(ma.wkb_geometry, mq.wkb_geometry)
+      FROM ${type} ma ${joinMode} JOIN queimadas mq ON ST_Intersects(ST_Simplify(ma.wkb_geometry, 0.1, TRUE), mq.wkb_geometry)
     `
   );
 
