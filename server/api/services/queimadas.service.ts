@@ -77,11 +77,11 @@ export async function queimadas(opts: HandlerOpts) {
     'Obtendo dados de queimadas usando "%s"...',
     formatter.object({ mapa, id, detailed, page, table })
   );
-  const simplifyFn = (text: string) => (detailed ? text : `ST_Simplify(${text}, 0.0001)`);
+  const simplifyFn = (text: string) => (detailed ? text : `ST_SimplifyVW(${text}, 0.0000001)`);
 
   const { rowCount, rows } = await knex.raw(
     `
-    SELECT ST_AsGeoJSON(${simplifyFn(`ST_Union(sm.geom)`)}, 6) AS geojson
+    SELECT ST_AsGeoJSON(ST_CollectionHomogenize(ST_Collect(${simplifyFn('sm.geom')})), 6) AS geojson
     FROM (
       SELECT m.wkb_geometry AS geom FROM ${table} m
       WHERE ST_Within(m.wkb_geometry, (SELECT map.wkb_geometry FROM ${mapa} map WHERE map.id = ${id}))
@@ -93,8 +93,10 @@ export async function queimadas(opts: HandlerOpts) {
 
   if (rowCount === 0) return null;
 
-  L.debug('Dados de queimadas prontos, retornando...');
-  return JSON.parse(rows[0].geojson);
+  const geojson = JSON.parse(rows[0].geojson);
+
+  L.debug(`Dados de queimadas prontos, retornando ${geojson.coordinates.length} registros...`);
+  return geojson;
 }
 
 export default { count, sources, queimadas };
