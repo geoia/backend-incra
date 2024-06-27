@@ -95,7 +95,7 @@ export async function queimadas(opts: HandlerOpts) {
 
   const geojson = JSON.parse(rows[0].geojson);
 
-  L.debug(`Dados de queimadas prontos, retornando ${geojson.coordinates.length} registros...`);
+  L.debug(`Dados de queimadas prontos, retornando ${geojson?.coordinates.length} registros...`);
   return geojson;
 }
 
