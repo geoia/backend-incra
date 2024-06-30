@@ -22,31 +22,30 @@ async function getSources(_: Request, res: Response) {
 }
 
 async function get(req: Request, res: Response) {
-  const criteria = {
-    municipio: req.params.municipio ? parseInt(req.params.municipio) : undefined,
-    estado: req.params.estado ? parseInt(req.params.estado) : undefined,
-    bioma: req.params.bioma || undefined,
-  } as Parameters<typeof count>[0];
+  const page = parseInt((req.query.page || '1').toString());
+  const perPage = parseInt((req.query.per_page || '100').toString());
+
+  const municipio = req.params.municipio ? parseInt(req.params.municipio) : undefined;
+  const estado = req.params.estado ? parseInt(req.params.estado) : undefined;
+  const bioma = req.params.bioma || undefined;
+  const source =
+    req.params.source && req.params.source !== 'latest' ? req.params.source : undefined;
+  const detailed = req.query.detailed?.toString().toLowerCase() === 'true';
+
+  const criteria = { municipio, estado, bioma, source } as Parameters<typeof count>[0];
 
   const queimadasCount = await count(criteria);
 
-  const page = parseInt((req.query.page || '1').toString());
-  const perPage = parseInt((req.query.per_page || '100').toString());
-  const source = req.params.source?.toString();
-
   const result = await queimadas({
     ...criteria,
-    source: source === 'latest' ? undefined : source,
     limit: perPage,
     page: page,
-    detailed: req.query.detailed?.toString().toLowerCase() === 'true',
+    detailed: detailed,
   });
 
   const lastPage = Math.ceil(queimadasCount / perPage);
 
-  let partialResponse = res
-    .status(result ? 200 : 204)
-    .setHeader('x-queimadas-count', queimadasCount);
+  let partialResponse = res.status(result ? 200 : 204);
 
   if (queimadasCount > 0) {
     partialResponse = partialResponse
