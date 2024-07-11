@@ -10,6 +10,8 @@ tags:
     description: API para consulta de mapas
   - name: Queimadas
     description: API para consulta de dados de queimadas
+  - name: Estatisticas
+    description: API para consulta de estatisticas de queimadas
   - name: Scripts
     description: API para executar scripts que preparam o ambiente.
   - name: Specification
@@ -140,6 +142,40 @@ paths:
           description: Retorna dados de queimadas do bioma no formato GeoJson
         204:
           description: Não existem dados para a consulta
+  /estatisticas/municipios/{id}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/municipio_id'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do municipio
+        204:
+          description: Não existem dados para a consulta
+  /estatisticas/estados/{id}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/estado_id'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do estado
+        204:
+          description: Não existem dados para a consulta
+  /estatisticas/biomas/{id}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/bioma'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do bioma
+        204:
+          description: Não existem dados para a consulta
+
   /scripts/download-mapas:
     post:
       security:
