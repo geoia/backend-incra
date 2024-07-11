@@ -100,4 +100,61 @@ export async function queimadas(opts: HandlerOpts) {
   return geojson;
 }
 
-export default { count, sources, queimadas };
+export async function estatisticasQueimadas(opts: LocaleOpts) {
+  console.log(opts);
+  const sourcesList = await sources();
+
+  sourcesList.forEach(async (source) => {
+    const { rows } = await knex.raw(`SELECT ogc_fid FROM mapas_queimadas_${source}`);
+    const ogc_fidList = rows.map((row: { ogc_fid: number }) => row.ogc_fid);
+
+    while (ogc_fidList.length > 0) {
+      console.log(ogc_fidList.length);
+      let numFocosQueimadas = 0;
+      let areaTotalQueimada = 0;
+
+      let municipioId = await knex.raw(
+        `SELECT id FROM mapas_municipios mm WHERE ST_WITHIN((select mq.wkb_geometry from mapas_queimadas_${source} mq where ogc_fid = ${ogc_fidList[0]}) , mm.wkb_geometry)`
+      );
+
+      while (municipioId.rows[0] == undefined) {
+        console.log('municipio não encontrado, id do foco: ', ogc_fidList[0]);
+        ogc_fidList.splice(0, 1);
+
+        if (ogc_fidList.length == 0) {
+          break;
+        }
+        municipioId = await knex.raw(
+          `SELECT id FROM mapas_municipios mm WHERE ST_WITHIN((select mq.wkb_geometry from mapas_queimadas_${source} mq where ogc_fid = ${ogc_fidList[0]}) , mm.wkb_geometry)`
+        );
+      }
+
+      if (ogc_fidList.length == 0) {
+        break;
+      }
+
+      const queimadasNoMunicipio = await knex.raw(
+        `SELECT mq.ogc_fid, ST_AREA(mq.wkb_geometry) from mapas_queimadas_${source} mq WHERE ST_WITHIN(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_municipios mm where id = ${municipioId.rows[0].id}))`
+      );
+
+      queimadasNoMunicipio.rows.forEach((row: { ogc_fid: number; st_area: number }) => {
+        numFocosQueimadas += 1;
+        areaTotalQueimada += row.st_area;
+        const i = ogc_fidList.indexOf(row.ogc_fid);
+        ogc_fidList.splice(i, 1);
+      });
+
+      console.log('DADOS DE QUEIMADAS');
+      console.log('ano: ', source);
+      console.log('id municipio: ', municipioId.rows[0]);
+      console.log('num focos: ', numFocosQueimadas);
+      console.log('area queimada: ', areaTotalQueimada);
+    }
+
+    console.log('ACABOU');
+  });
+
+  return sourcesList;
+}
+
+export default { count, sources, queimadas, estatisticasQueimadas };
