@@ -1,8 +1,6 @@
 import consola from 'consola';
 import knex from '../../common/knex';
 import { sources } from './queimadas.service';
-import { BadRequest } from 'express-openapi-validator/dist/openapi.validator';
-import { privateEncrypt } from 'crypto';
 
 export async function estatisticasQueimadas(source: string) {
   consola.info('Processando estatisticas do source ' + source);
@@ -22,12 +20,13 @@ export async function estatisticasQueimadas(source: string) {
 
     while (1) {
       const ogc_id = ogc_iterator.next();
+      console.log('ta aq dentro size: ', ogc_fidSet.size);
       if (ogc_id.done) break;
 
       municipioId = await knex.raw(
         `SELECT id FROM mapas_municipios mm WHERE ST_WITHIN((select mq.wkb_geometry from mapas_queimadas_${source} mq where ogc_fid = ${ogc_id.value}) , mm.wkb_geometry)`
       );
-      if (municipioId.rows[0] == undefined) {
+      if (municipioId == undefined || municipioId.rows[0] == undefined) {
         ogc_fidSet.delete(ogc_id.value);
         continue;
       } else {
@@ -35,26 +34,27 @@ export async function estatisticasQueimadas(source: string) {
       }
     }
 
-    if (ogc_fidSet.size == 0) return;
+    if (ogc_fidSet.size == 1) return;
 
-    // and mq.ogc_fid in (${ogc_iterator})
+    if (municipioId == undefined || municipioId.rows[0] == undefined) continue;
 
     const queimadasNoMunicipio = await knex.raw(
       `SELECT mq.ogc_fid from mapas_queimadas_${source} mq 
-           WHERE ST_WITHIN(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_municipios mm where id = ${municipioId.rows[0].id}))`
+           WHERE mq.ogc_fid in (${Array.from(ogc_fidSet)}) and
+              ST_WITHIN(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_municipios mm where id = ${municipioId.rows[0].id
+      })) `
     );
 
     await knex.transaction(async (trx) => {
       consola.log(
         'INSERINDO ' +
-          queimadasNoMunicipio.rows.length +
-          ' QUEIMADAS DO MUNICIPIO ' +
-          municipioId.rows[0].id
+        queimadasNoMunicipio.rows.length +
+        ' QUEIMADAS DO MUNICIPIO ' +
+        municipioId.rows[0].id
       );
       await trx.schema.withSchema('public').raw(`
         insert into dados_queimadas
-        SELECT mq.ogc_fid, ${
-          municipioId.rows[0].id
+        SELECT mq.ogc_fid, ${municipioId.rows[0].id
         }, ST_AREA(mq.wkb_geometry), ${month}, ${year} from mapas_queimadas_${source} mq 
         WHERE ogc_fid in (${queimadasNoMunicipio.rows.map(
           (row: { ogc_fid: number }) => row.ogc_fid
