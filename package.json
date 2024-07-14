@@ -16,6 +16,7 @@
     "scripts:download-mapas": "ts-node -r dotenv/config -T scripts/maps-download.ts",
     "scripts:municipios": "ts-node -r dotenv/config -T scripts/municipios.ts",
     "scripts:queimadas": "ts-node -r dotenv/config -T scripts/queimadas.ts",
+    "scripts:estatisticas": "ts-node -r dotenv/config -T scripts/estatisticas.ts",
     "scripts:prepare": "run-s scripts:download-mapas scripts:municipios scripts:queimadas",
     "prepare": "husky install"
   },
