@@ -248,6 +248,19 @@ paths:
           description: Prefixo não foi enviado ou não está cadastrado
         401:
           description: Credenciais inválidas ou não fornecidas.
+  /scripts/estatisticas:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Scripts
+      parameters:
+        - $ref: '#/components/parameters/override'
+      responses:
+        202:
+          description: Script foi iniciado de forma assincrona
+        401:
+          description: Credenciais inválidas ou não fornecidas.
   /spec:
     get:
       tags:

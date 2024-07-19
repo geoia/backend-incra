@@ -3,29 +3,39 @@ import knex from '../../common/knex';
 import { sources } from './queimadas.service';
 
 export async function estatisticasQueimadas(source: string) {
-  consola.info('Processando estatisticas do source ' + source);
+  consola.info('Processando estatisticas de ' + source);
   const year = source.slice(0, 4);
   const month = Number(source.slice(4, 6));
 
-  const { rows } = await knex.raw(`SELECT ogc_fid FROM mapas_queimadas_${source}`);
+  // const { rows } = await knex.raw(`SELECT ogc_fid FROM mapas_queimadas_${source}`);
+  //
+
+  const { rows } = await knex.raw(
+    `select mq.ogc_fid from mapas_queimadas_${source} mq where ST_INTERSECTS(mq.wkb_geometry, (select mb.wkb_geometry from mapa_brasil mb LIMIT 1))`
+  );
   const ogc_fidSet: Set<number> = new Set<number>();
   rows.map((row: { ogc_fid: number }) => ogc_fidSet.add(row.ogc_fid));
-  const inicial = ogc_fidSet.size;
   while (true) {
-    consola.info('PROGRESSO ' + ((inicial - ogc_fidSet.size) / inicial) * 100 + '%');
+    consola.info(`PROGRESSO: ${ogc_fidSet.size} restantes`);
     const ogc_iterator = ogc_fidSet.values();
     if (ogc_iterator.next().done) break;
 
     let municipioId: any;
+    let current_ogc_fid = -1;
+
+    if (ogc_fidSet.size == 0) {
+      return;
+    }
 
     while (1) {
       const ogc_id = ogc_iterator.next();
-      console.log('ta aq dentro size: ', ogc_fidSet.size);
       if (ogc_id.done) break;
+      current_ogc_fid = ogc_id.value;
 
       municipioId = await knex.raw(
-        `SELECT id FROM mapas_municipios mm WHERE ST_WITHIN((select mq.wkb_geometry from mapas_queimadas_${source} mq where ogc_fid = ${ogc_id.value}) , mm.wkb_geometry)`
+        `SELECT id FROM mapas_municipios mm WHERE ST_INTERSECTS((select mq.wkb_geometry from mapas_queimadas_${source} mq where ogc_fid = ${ogc_id.value}), mm.wkb_geometry)`
       );
+
       if (municipioId == undefined || municipioId.rows[0] == undefined) {
         ogc_fidSet.delete(ogc_id.value);
         continue;
@@ -34,31 +44,60 @@ export async function estatisticasQueimadas(source: string) {
       }
     }
 
-    if (ogc_fidSet.size == 1) return;
+    if (current_ogc_fid == -1) {
+      break;
+    }
 
     if (municipioId == undefined || municipioId.rows[0] == undefined) continue;
+
+    if (municipioId.rows.length > 1) {
+      await knex.transaction(async (trx) => {
+        for (let i = 1; i < municipioId.length; i++) {
+          await trx.schema.withSchema('public').raw(`
+          insert into dados_queimadas
+          SELECT 
+            mq.ogc_fid,
+            ${municipioId.rows[i].id},
+            ST_AREA(st_intersection(
+            	mq.wkb_geometry,
+	           (select mm.wkb_geometry from mapas_municipios mm where id = 1100338)
+	          )),
+            ${month},
+            ${year} from mapas_queimadas_${source} mq 
+          WHERE ogc_fid = ${current_ogc_fid}
+        `);
+        }
+      });
+    }
 
     const queimadasNoMunicipio = await knex.raw(
       `SELECT mq.ogc_fid from mapas_queimadas_${source} mq 
            WHERE mq.ogc_fid in (${Array.from(ogc_fidSet)}) and
-              ST_WITHIN(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_municipios mm where id = ${municipioId.rows[0].id
+              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_municipios mm where id = ${municipioId.rows[0].id
       })) `
     );
 
     await knex.transaction(async (trx) => {
-      consola.log(
+      consola.info(
         'INSERINDO ' +
         queimadasNoMunicipio.rows.length +
         ' QUEIMADAS DO MUNICIPIO ' +
         municipioId.rows[0].id
       );
       await trx.schema.withSchema('public').raw(`
-        insert into dados_queimadas
-        SELECT mq.ogc_fid, ${municipioId.rows[0].id
-        }, ST_AREA(mq.wkb_geometry), ${month}, ${year} from mapas_queimadas_${source} mq 
-        WHERE ogc_fid in (${queimadasNoMunicipio.rows.map(
-          (row: { ogc_fid: number }) => row.ogc_fid
-        )})
+          insert into dados_queimadas
+          SELECT 
+            mq.ogc_fid,
+            ${municipioId.rows[0].id},
+            ST_AREA(st_intersection(
+            	mq.wkb_geometry,
+	           (select mm.wkb_geometry from mapas_municipios mm where id = 1100338)
+	          )),
+            ${month},
+            ${year} from mapas_queimadas_${source} mq 
+          WHERE ogc_fid in (${queimadasNoMunicipio.rows.map(
+        (row: { ogc_fid: number }) => row.ogc_fid
+      )})
         `);
     });
     queimadasNoMunicipio.rows.map(async (row: { ogc_fid: number }) => {
@@ -66,7 +105,7 @@ export async function estatisticasQueimadas(source: string) {
     });
   }
 
-  console.log('ACABOU');
+  consola.info(`PROCESSAMENTO FINALIZADO PARA ${source}`);
 }
 
 async function createTables(override: boolean) {
@@ -148,7 +187,7 @@ export async function processarEstatisticas(override: boolean) {
   for (let index = 0; index < sourcesList.length; index++) {
     await estatisticasQueimadas(String(sourcesList[index]));
   }
-  console.log((Date.now() - data) / 1000 + 's');
+  consola.info((Date.now() - data) / 1000 + 's');
 }
 
 export default { estatisticasQueimadas, processarEstatisticas };
