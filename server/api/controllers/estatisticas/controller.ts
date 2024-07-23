@@ -1,8 +1,13 @@
 import { Request, Response } from 'express';
-import { estatisticas } from '../../services/estatisticas.service';
+import {
+  estadosComDados,
+  estatisticasMunicipios,
+  municipiosComDados,
+} from '../../services/estatisticas.service';
 
-async function getEstatisticas(_: Request, res: Response) {
-  const result = await estatisticas();
+async function getEstatisticasMunicipios(req: Request, res: Response) {
+  const municipio: string = req.params.municipio.toString();
+  const result = await estatisticasMunicipios(municipio);
 
   return res.status(result ? 200 : 204).send(result);
 }
@@ -18,4 +23,14 @@ async function getEstatisticasQueimadas(_: Request, res: Response) {
   return res.status(result ? 200 : 204).send(result);
 }
 
-export default { getEstatisticas, getEstatisticasQueimadas };
+async function findMunicipios(_: Request, res: Response) {
+  const result = await municipiosComDados();
+  return res.status(result ? 200 : 204).send(result);
+}
+
+async function findEstados(_: Request, res: Response) {
+  const result = await estadosComDados();
+  return res.status(result ? 200 : 204).send(result);
+}
+
+export default { getEstatisticasMunicipios, getEstatisticasQueimadas, findMunicipios, findEstados };

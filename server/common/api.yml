@@ -142,6 +142,15 @@ paths:
           description: Retorna dados de queimadas do bioma no formato GeoJson
         204:
           description: Não existem dados para a consulta
+  /estatisticas/municipios:
+    get:
+      tags:
+        - Estatisticas
+      responses:
+        200:
+          description: Retorna todos os municipios que possuem dados de queimadas
+        204:
+          description: Não existem dados para a consulta
   /estatisticas/municipios/{id}:
     get:
       tags:
@@ -153,28 +162,37 @@ paths:
           description: Retorna estatisticas de queimadas do municipio
         204:
           description: Não existem dados para a consulta
-  /estatisticas/estados/{id}:
+  /estatisticas/estados:
     get:
       tags:
         - Estatisticas
-      parameters:
-        - $ref: '#/components/parameters/estado_id'
       responses:
         200:
-          description: Retorna estatisticas de queimadas do estado
+          description: Retorna todos os estados que possuem dados de queimadas
         204:
           description: Não existem dados para a consulta
-  /estatisticas/biomas/{id}:
-    get:
-      tags:
-        - Estatisticas
-      parameters:
-        - $ref: '#/components/parameters/bioma'
-      responses:
-        200:
-          description: Retorna estatisticas de queimadas do bioma
-        204:
-          description: Não existem dados para a consulta
+  # /estatisticas/estados/{id}:
+  #   get:
+  #     tags:
+  #       - Estatisticas
+  #     parameters:
+  #       - $ref: '#/components/parameters/estado_id'
+  #     responses:
+  #       200:
+  #         description: Retorna estatisticas de queimadas do estado
+  #       204:
+  #         description: Não existem dados para a consulta
+  # /estatisticas/biomas/{id}:
+  #   get:
+  #     tags:
+  #       - Estatisticas
+  #     parameters:
+  #       - $ref: '#/components/parameters/bioma'
+  #     responses:
+  #       200:
+  #         description: Retorna estatisticas de queimadas do bioma
+  #       204:
+  #         description: Não existem dados para a consulta
 
   /scripts/download-mapas:
     post:

@@ -2,7 +2,9 @@ import consola from 'consola';
 import knex from '../../common/knex';
 import { sources } from './queimadas.service';
 
-export async function estatisticasQueimadas(source: string) {
+export async function estatisticasQueimadas(source: string, tipo: string) {
+  const tabela_queimadas = `dados_queimadas_${tipo}`;
+
   consola.info('Processando estatisticas de ' + source);
   const year = source.slice(0, 4);
   const month = Number(source.slice(4, 6));
@@ -20,23 +22,22 @@ export async function estatisticasQueimadas(source: string) {
     const ogc_iterator = ogc_fidSet.values();
     if (ogc_iterator.next().done) break;
 
-    let municipioId: any;
+    let referencias: any;
     let current_ogc_fid = -1;
 
     if (ogc_fidSet.size == 0) {
       return;
     }
-
     while (1) {
       const ogc_id = ogc_iterator.next();
-      if (ogc_id.done) break;
+      if (ogc_id.done) return;
       current_ogc_fid = ogc_id.value;
-
-      municipioId = await knex.raw(
-        `SELECT id FROM mapas_municipios mm WHERE ST_INTERSECTS((select mq.wkb_geometry from mapas_queimadas_${source} mq where ogc_fid = ${ogc_id.value}), mm.wkb_geometry)`
+      referencias = await knex.raw(
+        `SELECT id FROM mapas_${tipo} mm WHERE ST_INTERSECTS((select mq.wkb_geometry from mapas_queimadas_${source} mq 
+          where ogc_fid = ${ogc_id.value}), mm.wkb_geometry)`
       );
 
-      if (municipioId == undefined || municipioId.rows[0] == undefined) {
+      if (referencias == undefined || referencias.rows[0] == undefined) {
         ogc_fidSet.delete(ogc_id.value);
         continue;
       } else {
@@ -48,20 +49,20 @@ export async function estatisticasQueimadas(source: string) {
       break;
     }
 
-    if (municipioId == undefined || municipioId.rows[0] == undefined) continue;
+    if (referencias == undefined || referencias.rows[0] == undefined) continue;
 
-    if (municipioId.rows.length > 1) {
+    if (referencias.rows.length > 1) {
       await knex.transaction(async (trx) => {
-        for (let i = 1; i < municipioId.length; i++) {
+        for (let i = 1; i < referencias.length; i++) {
           await trx.schema.withSchema('public').raw(`
-          insert into dados_queimadas
+          insert into ${tabela_queimadas}
           SELECT 
             mq.ogc_fid,
-            ${municipioId.rows[i].id},
+            ${referencias.rows[i].id},
             ST_AREA(st_intersection(
             	mq.wkb_geometry,
-	           (select mm.wkb_geometry from mapas_municipios mm where id = 1100338)
-	          )),
+	           (select mm.wkb_geometry from mapas_${tipo} mm where id = ${referencias.rows[i].id})
+	          ), true),
             ${month},
             ${year} from mapas_queimadas_${source} mq 
           WHERE ogc_fid = ${current_ogc_fid}
@@ -73,31 +74,32 @@ export async function estatisticasQueimadas(source: string) {
     const queimadasNoMunicipio = await knex.raw(
       `SELECT mq.ogc_fid from mapas_queimadas_${source} mq 
            WHERE mq.ogc_fid in (${Array.from(ogc_fidSet)}) and
-              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_municipios mm where id = ${municipioId.rows[0].id
+              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_${tipo} mm where id = ${
+        referencias.rows[0].id
       })) `
     );
 
     await knex.transaction(async (trx) => {
       consola.info(
         'INSERINDO ' +
-        queimadasNoMunicipio.rows.length +
-        ' QUEIMADAS DO MUNICIPIO ' +
-        municipioId.rows[0].id
+          queimadasNoMunicipio.rows.length +
+          ' QUEIMADAS DO MUNICIPIO ' +
+          referencias.rows[0].id
       );
       await trx.schema.withSchema('public').raw(`
-          insert into dados_queimadas
+          insert into ${tabela_queimadas}
           SELECT 
             mq.ogc_fid,
-            ${municipioId.rows[0].id},
+            ${referencias.rows[0].id},
             ST_AREA(st_intersection(
             	mq.wkb_geometry,
-	           (select mm.wkb_geometry from mapas_municipios mm where id = 1100338)
-	          )),
+	           (select mm.wkb_geometry from mapas_${tipo} mm where id = ${referencias.rows[0].id})
+	          ), true),
             ${month},
             ${year} from mapas_queimadas_${source} mq 
           WHERE ogc_fid in (${queimadasNoMunicipio.rows.map(
-        (row: { ogc_fid: number }) => row.ogc_fid
-      )})
+            (row: { ogc_fid: number }) => row.ogc_fid
+          )})
         `);
     });
     queimadasNoMunicipio.rows.map(async (row: { ogc_fid: number }) => {
@@ -108,36 +110,37 @@ export async function estatisticasQueimadas(source: string) {
   consola.info(`PROCESSAMENTO FINALIZADO PARA ${source}`);
 }
 
-async function createTables(override: boolean) {
-  const hasDadosTable = await knex.schema.withSchema('public').hasTable('dados_queimadas');
-  const hasEstatisticasTable = await knex.schema
-    .withSchema('public')
-    .hasTable('dados_estatisticos_queimadas');
+async function createTables(override: boolean, tipo: string) {
+  const tabela_queimadas = `dados_queimadas_${tipo}`;
+  const tabela_estatisticas = `estatisticas_queimadas_${tipo}`;
+
+  const hasDadosTable = await knex.schema.withSchema('public').hasTable(tabela_queimadas);
+  const hasEstatisticasTable = await knex.schema.withSchema('public').hasTable(tabela_estatisticas);
 
   await knex.transaction(async (trx) => {
     if (override) {
       consola.info('Deletando dados antigos...');
-      if (hasDadosTable) await trx.schema.withSchema('public').dropTableIfExists('dados_queimadas');
+      if (hasDadosTable) await trx.schema.withSchema('public').dropTableIfExists(tabela_queimadas);
       if (hasEstatisticasTable)
-        await trx.schema.withSchema('public').dropTableIfExists('dados_estatisticos_queimadas');
+        await trx.schema.withSchema('public').dropTableIfExists(tabela_estatisticas);
     }
 
     await trx.schema.withSchema('public').raw(`
-        create or replace function add_area() returns trigger as $$
+        create or replace function adicionar_estatistica_${tipo}() returns trigger as $$
         declare 
           existe integer;
         begin
-          select count(*) INTO existe from dados_estatisticos_queimadas dd
-          where dd.mes = NEW.mes and dd.ano = NEW.ano and dd.municipio_id = NEW.municipio_id;
+          select count(*) INTO existe from ${tabela_estatisticas} dd
+          where dd.mes = NEW.mes and dd.ano = NEW.ano and dd.referencia_id = NEW.referencia_id;
           IF existe != 0 THEN
-                  update dados_estatisticos_queimadas set 
+                  update ${tabela_estatisticas} set 
                   total_area_queimada = total_area_queimada + new.area_queimada,
                   total_focos_queimada = total_focos_queimada + 1
-                  where mes = NEW.mes and ano = NEW.ano and municipio_id = NEW.municipio_id;
+                  where mes = NEW.mes and ano = NEW.ano and referencia_id = NEW.referencia_id;
               else
-                insert into dados_estatisticos_queimadas
-                (municipio_id, total_area_queimada, total_focos_queimada, mes, ano) values
-                (new.municipio_id, new.area_queimada, 1, new.mes, new.ano);
+                insert into ${tabela_estatisticas}
+                (referencia_id, total_area_queimada, total_focos_queimada, mes, ano) values
+                (new.referencia_id, new.area_queimada, 1, new.mes, new.ano);
               END IF;
           return new;
         end;
@@ -146,34 +149,36 @@ async function createTables(override: boolean) {
 
     if (!hasDadosTable || override) {
       await trx.schema.withSchema('public').raw(`
-          create table dados_queimadas(
+          create table ${tabela_queimadas}(
               queimada_id int4 null,
-              municipio_id int4 null,
+              referencia_id int4 null,
               area_queimada DOUBLE PRECISION ,
               mes smallint,
               ano smallint,
-              FOREIGN KEY(municipio_id)
-              REFERENCES mapas_municipios(id)
+              FOREIGN KEY(referencia_id)
+              REFERENCES mapas_${tipo}(id)
+              ON DELETE CASCADE
           )
           `);
       await trx.schema.withSchema('public').raw(`
           CREATE TRIGGER add_estatistica AFTER INSERT
-          ON public.dados_queimadas
+          ON public.${tabela_queimadas}
           FOR EACH ROW
-            execute FUNCTION add_area()
+            execute FUNCTION adicionar_estatistica_${tipo}()
           `);
     }
 
     if (!hasEstatisticasTable || override) {
       await trx.schema.withSchema('public').raw(`
-          create table dados_estatisticos_queimadas(
-              municipio_id int4 null,
+          create table ${tabela_estatisticas}(
+              referencia_id int4 null,
               total_area_queimada DOUBLE PRECISION,
               total_focos_queimada bigint,
               mes smallint,
               ano smallint,
-              FOREIGN KEY(municipio_id) 
-              REFERENCES mapas_municipios(id)
+              FOREIGN KEY(referencia_id) 
+              REFERENCES mapas_${tipo}(id)
+              ON DELETE CASCADE
           )
           `);
     }
@@ -181,13 +186,22 @@ async function createTables(override: boolean) {
 }
 
 export async function processarEstatisticas(override: boolean) {
-  await createTables(override);
+  await Promise.all([
+    // createTables(override, 'biomas'),
+    createTables(override, 'municipios'),
+  ]);
+
   const sourcesList: Array<{ year: number; month: number }> = await sources();
   const data = Date.now();
+
   for (let index = 0; index < sourcesList.length; index++) {
-    await estatisticasQueimadas(String(sourcesList[index]));
+    await Promise.all([
+      // estatisticasQueimadas(String(sourcesList[index]), 'biomas'),
+      estatisticasQueimadas(String(sourcesList[index]), 'municipios'),
+    ]);
   }
-  consola.info((Date.now() - data) / 1000 + 's');
+
+  consola.info('Processo finalizado em ' + (Date.now() - data) / 1000 + 's');
 }
 
 export default { estatisticasQueimadas, processarEstatisticas };
