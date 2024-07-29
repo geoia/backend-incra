@@ -71,7 +71,7 @@ export async function estatisticasMunicipios(municipio: string) {
       est.mes,
       est.total_area_queimada as area_queimada,
       est.total_focos_queimada as focos,
-      ((est.total_area_queimada/1000000)/mm.area_km2) * 100 as porcentagem_queimada
+      ((est.total_area_queimada/1000000)/mm.area_km2) * 100 as percentual
     from estatisticas_queimadas_municipios est
     join mapas_municipios mm on mm.id = est.referencia_id
     where est.referencia_id = ${municipio} and ano = ${ano}
