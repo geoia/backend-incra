@@ -49,12 +49,18 @@ export async function estadosComDados() {
 
 export async function estatisticasMunicipios(municipio: string) {
   const anos = await knex.raw(
-    `select 
-      distinct est.ano
-    from estatisticas_queimadas_municipios est
-    where est.referencia_id = ${municipio}
-    order by ano  
-  `
+    `
+      select 
+          est.ano,
+          SUM(total_area_queimada) as area_queimada,
+          SUM(total_focos_queimada) as focos,
+          ((SUM(total_area_queimada)/1000000)/
+          (select mm.area_km2 from mapas_municipios mm where mm.id = ${municipio})) * 100 as percentual
+      from estatisticas_queimadas_municipios est
+      where est.referencia_id = ${municipio}
+      group by ano
+      order by ano  
+    `
   );
   const result: any = new Array<any>(anos.rows.length);
 
@@ -64,14 +70,19 @@ export async function estatisticasMunicipios(municipio: string) {
       `select 
       est.mes,
       est.total_area_queimada as area_queimada,
-      est.total_focos_queimada as focos
+      est.total_focos_queimada as focos,
+      ((est.total_area_queimada/1000000)/mm.area_km2) * 100 as porcentagem_queimada
     from estatisticas_queimadas_municipios est
+    join mapas_municipios mm on mm.id = est.referencia_id
     where est.referencia_id = ${municipio} and ano = ${ano}
     order by mes  
   `
     );
     result[index] = {
       ano: ano,
+      area_queimada: anos.rows[index].area_queimada,
+      focos: anos.rows[index].focos,
+      percentual: anos.rows[index].percentual,
       meses: query_meses.rows,
     };
   }
