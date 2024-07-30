@@ -12,15 +12,15 @@ async function inserir_queimadas(
   year: string
 ) {
   await knex.transaction(async (trx) => {
-    for (const referencia of referencias) {
+    for (let i = 0; i < referencias.length; i++) {
       await trx.schema.withSchema('public').raw(`
         insert into ${table}
         SELECT 
           mq.ogc_fid,
-          ${referencia},
+          ${referencias[i]},
           ST_AREA(st_intersection(
             mq.wkb_geometry,
-            (select mm.wkb_geometry from mapas_${table_referencia} mm where id = ${referencia})
+            (select mm.wkb_geometry from mapas_${table_referencia} mm where id = ${referencias[i]})
           ), true),
           ${month},
           ${year} from mapas_queimadas_${source} mq 
@@ -67,7 +67,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
     }
 
     if (referencias.rows.length > 1) {
-      inserir_queimadas(
+      await inserir_queimadas(
         [ogc_fid],
         referencias.rows
           .fillter((_: { id: number }, index: number) => index != 0)
@@ -83,19 +83,18 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
     const queimadasNoMunicipio = await knex.raw(
       `SELECT mq.ogc_fid from mapas_queimadas_${source} mq 
            WHERE mq.ogc_fid in (${Array.from(ogc_fidSet)}) and
-              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_${tipo} mm where id = ${
-        referencias.rows[0].id
+              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_${tipo} mm where id = ${referencias.rows[0].id
       })) `
     );
 
     consola.info(
       'INSERINDO ' +
-        queimadasNoMunicipio.rows.length.toString().padStart(5, '0') +
-        ' QUEIMADAS PARA REFERENCIA ' +
-        referencias.rows[0].id.toString().padStart(7, '0')
+      queimadasNoMunicipio.rows.length.toString().padStart(5, '0') +
+      ' QUEIMADAS PARA REFERENCIA ' +
+      referencias.rows[0].id.toString().padStart(7, '0')
     );
 
-    inserir_queimadas(
+    await inserir_queimadas(
       queimadasNoMunicipio.rows.map((row: { ogc_fid: number }) => row.ogc_fid),
       [referencias.rows[0].id],
       tabela_queimadas,

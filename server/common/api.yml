@@ -171,17 +171,17 @@ paths:
           description: Retorna todos os estados que possuem dados de queimadas
         204:
           description: Não existem dados para a consulta
-  # /estatisticas/estados/{id}:
-  #   get:
-  #     tags:
-  #       - Estatisticas
-  #     parameters:
-  #       - $ref: '#/components/parameters/estado_id'
-  #     responses:
-  #       200:
-  #         description: Retorna estatisticas de queimadas do estado
-  #       204:
-  #         description: Não existem dados para a consulta
+  /estatisticas/estados/{id}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/estado_id'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do estado
+        204:
+          description: Não existem dados para a consulta
   # /estatisticas/biomas/{id}:
   #   get:
   #     tags:

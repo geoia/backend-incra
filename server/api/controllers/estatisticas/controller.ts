@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import {
+  estatisticasEstados,
   estadosComDados,
   estatisticasMunicipios,
   municipiosComDados,
@@ -12,14 +13,10 @@ async function getEstatisticasMunicipios(req: Request, res: Response) {
   return res.status(result ? 200 : 204).send(result);
 }
 
-async function getEstatisticasQueimadas(_: Request, res: Response) {
-  // const municipio = req.params.municipio ? parseInt(req.params.municipio) : undefined;
-  // const estado = req.params.estado ? parseInt(req.params.estado) : undefined;
-  // const bioma = req.params.bioma || undefined;
-  //
-  // const result = await estatisticasQueimadas();
+async function getEstatisticasEstados(req: Request, res: Response) {
+  const estado: string = req.params.estado.toString();
+  const result = await estatisticasEstados(estado);
 
-  const result = 200;
   return res.status(result ? 200 : 204).send(result);
 }
 
@@ -33,4 +30,9 @@ async function findEstados(_: Request, res: Response) {
   return res.status(result ? 200 : 204).send(result);
 }
 
-export default { getEstatisticasMunicipios, getEstatisticasQueimadas, findMunicipios, findEstados };
+export default {
+  getEstatisticasMunicipios,
+  findMunicipios,
+  findEstados,
+  getEstatisticasEstados,
+};
