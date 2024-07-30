@@ -134,7 +134,7 @@ async function populateMapasMunicipios(override?: boolean) {
       // NAO SUBIR
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_biomas AS 
-        SELECT ogc_fid::integer AS id, REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS label, bioma, wkb_geometry::geometry(polygon) 
+        SELECT REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, bioma, wkb_geometry::geometry(polygon) 
         FROM shapefiles.lm_bioma_250
       `),
       trx.schema.withSchema('public').raw(`
