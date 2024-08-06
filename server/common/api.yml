@@ -162,6 +162,18 @@ paths:
           description: Retorna estatisticas de queimadas do municipio
         204:
           description: Não existem dados para a consulta
+  /estatisticas/municipios/{id}/{year}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/municipio_id'
+        - $ref: '#/components/parameters/year'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do municipio no ano
+        204:
+          description: Não existem dados para a consulta
   /estatisticas/estados:
     get:
       tags:
@@ -182,6 +194,19 @@ paths:
           description: Retorna estatisticas de queimadas do estado
         204:
           description: Não existem dados para a consulta
+  /estatisticas/estados/{id}/{year}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/estado_id'
+        - $ref: '#/components/parameters/year'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do estado
+        204:
+          description: Não existem dados para a consulta
+
   # /estatisticas/biomas/{id}:
   #   get:
   #     tags:
@@ -351,6 +376,13 @@ components:
       schema:
         type: string
         default: latest
+      required: true
+    year:
+      in: path
+      name: year
+      schema:
+        type: string
+        default: 2021
       required: true
     full:
       in: query
