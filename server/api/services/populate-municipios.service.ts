@@ -131,7 +131,6 @@ async function populateMapasMunicipios(override?: boolean) {
         SELECT cd_mun::integer AS id, nm_mun AS nome, sigla, area_km2, wkb_geometry::geometry(polygon)
         FROM shapefiles.br_municipios_2021
       `),
-      // NAO SUBIR
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_biomas AS 
         SELECT REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, bioma, wkb_geometry::geometry(polygon) 
