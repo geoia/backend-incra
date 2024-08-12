@@ -4,8 +4,6 @@ import { populateMunicipios } from '../../services/populate-municipios.service';
 import { exec, getPrefixes, execDelete } from '../../services/process-queimadas.service';
 import { saveContent } from '../../services/upload-queimadas.service';
 
-// import ogr2ogr from '../../../common/utils/ogr2ogr';
-
 import { processarEstatisticas } from '../../services/process-estatisticas.service';
 
 async function downloadMapasController(req: Request, res: Response) {
@@ -57,11 +55,6 @@ async function upload(req: Request, res: Response) {
 
 async function processEstatisticasController(req: Request, res: Response) {
   const override: boolean = Boolean(req.query.override) || false;
-  // ogr2ogr('/usr/src/app/shapefiles/mapas/BR_PAIS_2021', {
-  //   table: 'mapas_brasil_2021',
-  //   overwrite: override || false,
-  // });
-
   processarEstatisticas(override);
   return res.status(202).json({ message: 'script iniciado com sucesso!' });
 }
