@@ -22,7 +22,7 @@ export default async function ogr2ogr(path: string, opts?: Ogr2OgrOpts) {
 
   await knex.schema.createSchemaIfNotExists('shapefiles');
 
-  let args = `-nlt POLYGON -f PostgreSQL ${connStr}`;
+  let args = `-lco PRECISION=NO -nlt POLYGON -f PostgreSQL ${connStr}`;
 
   if (normalizedOpts?.progress !== false) args += ' -progress';
   if (normalizedOpts?.overwrite) args += ' -preserve_fid -overwrite';

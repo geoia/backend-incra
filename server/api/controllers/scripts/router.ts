@@ -12,4 +12,5 @@ export default Router()
   .post('/populate-municipios', authHandler, controller.populateMunicipiosController)
   .post('/queimadas', authHandler, controller.queimadasExecController)
   .delete('/queimadas', authHandler, controller.queimadasDeleteController)
-  .post('/queimadas/upload', authHandler, upload.single('zipfile'), controller.upload);
+  .post('/queimadas/upload', authHandler, upload.single('zipfile'), controller.upload)
+  .post('/estatisticas', authHandler, controller.processEstatisticasController);

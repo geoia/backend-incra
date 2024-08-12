@@ -10,6 +10,8 @@ tags:
     description: API para consulta de mapas
   - name: Queimadas
     description: API para consulta de dados de queimadas
+  - name: Estatisticas
+    description: API para consulta de estatisticas de queimadas
   - name: Scripts
     description: API para executar scripts que preparam o ambiente.
   - name: Specification
@@ -140,6 +142,83 @@ paths:
           description: Retorna dados de queimadas do bioma no formato GeoJson
         204:
           description: Não existem dados para a consulta
+  /estatisticas/municipios:
+    get:
+      tags:
+        - Estatisticas
+      responses:
+        200:
+          description: Retorna todos os municipios que possuem dados de queimadas
+        204:
+          description: Não existem dados para a consulta
+  /estatisticas/municipios/{id}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/municipio_id'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do municipio
+        204:
+          description: Não existem dados para a consulta
+  /estatisticas/municipios/{id}/{year}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/municipio_id'
+        - $ref: '#/components/parameters/year'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do municipio no ano
+        204:
+          description: Não existem dados para a consulta
+  /estatisticas/estados:
+    get:
+      tags:
+        - Estatisticas
+      responses:
+        200:
+          description: Retorna todos os estados que possuem dados de queimadas
+        204:
+          description: Não existem dados para a consulta
+  /estatisticas/estados/{id}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/estado_id'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do estado
+        204:
+          description: Não existem dados para a consulta
+  /estatisticas/estados/{id}/{year}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/estado_id'
+        - $ref: '#/components/parameters/year'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do estado
+        204:
+          description: Não existem dados para a consulta
+
+  # /estatisticas/biomas/{id}:
+  #   get:
+  #     tags:
+  #       - Estatisticas
+  #     parameters:
+  #       - $ref: '#/components/parameters/bioma'
+  #     responses:
+  #       200:
+  #         description: Retorna estatisticas de queimadas do bioma
+  #       204:
+  #         description: Não existem dados para a consulta
+
   /scripts/download-mapas:
     post:
       security:
@@ -210,6 +289,19 @@ paths:
           description: Deletado
         400:
           description: Prefixo não foi enviado ou não está cadastrado
+        401:
+          description: Credenciais inválidas ou não fornecidas.
+  /scripts/estatisticas:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Scripts
+      parameters:
+        - $ref: '#/components/parameters/override'
+      responses:
+        202:
+          description: Script foi iniciado de forma assincrona
         401:
           description: Credenciais inválidas ou não fornecidas.
   /spec:
@@ -284,6 +376,13 @@ components:
       schema:
         type: string
         default: latest
+      required: true
+    year:
+      in: path
+      name: year
+      schema:
+        type: string
+        default: 2021
       required: true
     full:
       in: query

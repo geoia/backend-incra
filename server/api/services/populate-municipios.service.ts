@@ -90,13 +90,14 @@ export async function populateDadosMunicipios(override?: boolean) {
 }
 
 async function populateMapasMunicipios(override?: boolean) {
-  const [hasMunicipios, hasEstados, hasBiomas] = await Promise.all([
+  const [hasMunicipios, hasEstados, hasBiomas, hasBrasil] = await Promise.all([
     knex.schema.withSchema('shapefiles').hasTable('br_municipios_2021'),
     knex.schema.withSchema('shapefiles').hasTable('br_uf_2021'),
     knex.schema.withSchema('shapefiles').hasTable('biomas'),
+    knex.schema.withSchema('shapefiles').hasTable('br_pais_2021'),
   ]);
 
-  if (hasMunicipios && hasEstados && hasBiomas && !override) {
+  if (hasMunicipios && hasEstados && hasBiomas && hasBrasil && !override) {
     consola.warn('Já existem mapas dos municipios, estados e biomas no banco!');
     return;
   }
@@ -106,6 +107,7 @@ async function populateMapasMunicipios(override?: boolean) {
     ogr2ogr(join('mapas', 'BR_Municipios_2021', 'BR_Municipios_2021.shp')),
     ogr2ogr(join('mapas', 'BR_UF_2021', 'BR_UF_2021.shp')),
     ogr2ogr(join('mapas', 'Biomas', 'lm_bioma_250.shp')),
+    ogr2ogr(join('mapas', 'BR_Pais_2021', 'BR_Pais_2021.shp')),
   ]);
 
   await knex.transaction(async (trx) => {
@@ -114,6 +116,7 @@ async function populateMapasMunicipios(override?: boolean) {
       trx.schema.withSchema('public').dropTableIfExists('mapas_municipios'),
       trx.schema.withSchema('public').dropTableIfExists('mapas_estados'),
       trx.schema.withSchema('public').dropTableIfExists('mapas_biomas'),
+      trx.schema.withSchema('public').dropTableIfExists('mapa_brasil'),
     ]);
 
     consola.info('Copiando dados das tabelas...');
@@ -133,6 +136,11 @@ async function populateMapasMunicipios(override?: boolean) {
         SELECT REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, bioma, wkb_geometry::geometry(polygon) 
         FROM shapefiles.lm_bioma_250
       `),
+      trx.schema.withSchema('public').raw(`
+        CREATE TABLE public.mapa_brasil AS 
+        SELECT ogc_fid::integer AS id, nm_pais AS nome, area_km2, wkb_geometry::geometry(polygon)
+        FROM shapefiles.br_pais_2021 mb 
+      `),
     ]);
 
     consola.info('Normalizando referências...');
@@ -140,6 +148,7 @@ async function populateMapasMunicipios(override?: boolean) {
       normalizeSRID('public.mapas_estados', 'wkb_geometry', { transaction: trx }),
       normalizeSRID('public.mapas_municipios', 'wkb_geometry', { transaction: trx }),
       normalizeSRID('public.mapas_biomas', 'wkb_geometry', { transaction: trx }),
+      normalizeSRID('public.mapa_brasil', 'wkb_geometry', { transaction: trx }),
     ]);
 
     consola.info('Criando novos indices e chaves...');
@@ -149,6 +158,11 @@ async function populateMapasMunicipios(override?: boolean) {
         .withSchema('public')
         .raw(`ALTER TABLE public.mapas_municipios ADD PRIMARY KEY (id)`),
       trx.schema.withSchema('public').raw(`ALTER TABLE public.mapas_biomas ADD PRIMARY KEY (id)`),
+      trx.schema
+        .withSchema('public')
+        .raw(
+          `CREATE INDEX IF NOT EXISTS index_municipios on mapas_municipios USING gist (wkb_geometry)`
+        ),
     ]);
   });
 

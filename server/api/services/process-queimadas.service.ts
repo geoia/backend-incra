@@ -121,7 +121,7 @@ export async function exec() {
     const hasPublicTable = await knex.schema.withSchema('public').hasTable(data.table);
 
     if (!hasPublicTable) {
-      consola.info('Copiando dados do mapa para shema public...');
+      consola.info('Copiando dados do mapa para schema public...');
       await knex.transaction(async (trx) => {
         await trx.schema.withSchema('public').raw(`
           CREATE TABLE ${data.table} AS

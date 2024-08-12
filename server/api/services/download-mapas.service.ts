@@ -25,6 +25,11 @@ export async function downloadMapas(override: boolean): Promise<void> {
       join(mapas, 'Biomas'),
       override
     ),
+    download(
+      'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2021/Brasil/BR/BR_Pais_2021.zip',
+      join(mapas, 'BR_Pais_2021'),
+      override
+    ),
   ]);
 
   consola.success('Mapas baixados com sucesso!');
