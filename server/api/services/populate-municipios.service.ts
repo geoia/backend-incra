@@ -113,10 +113,10 @@ async function populateMapasMunicipios(override?: boolean) {
   await knex.transaction(async (trx) => {
     consola.info('Removendo dados antigos...');
     await Promise.all([
-      trx.schema.withSchema('public').dropTableIfExists('mapas_municipios'),
-      trx.schema.withSchema('public').dropTableIfExists('mapas_estados'),
-      trx.schema.withSchema('public').dropTableIfExists('mapas_biomas'),
-      trx.schema.withSchema('public').dropTableIfExists('mapa_brasil'),
+      trx.schema.withSchema('public').raw('DROP TABLE IF EXISTS mapas_municipios CASCADE'),
+      trx.schema.withSchema('public').raw('DROP TABLE IF EXISTS mapas_estados CASCADE'),
+      trx.schema.withSchema('public').raw('DROP TABLE IF EXISTS mapas_biomas CASCADE'),
+      trx.schema.withSchema('public').raw('DROP TABLE IF EXISTS mapa_brasil CASCADE'),
     ]);
 
     consola.info('Copiando dados das tabelas...');
