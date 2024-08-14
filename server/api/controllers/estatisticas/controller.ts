@@ -8,7 +8,7 @@ import {
 
 async function getEstatisticasMunicipios(req: Request, res: Response) {
   const municipio: string = req.params.municipio.toString();
-  const ano: string = req.params.ano?.toString();
+  const ano: string | undefined = req.query.year?.toString();
 
   const result = await estatisticasMunicipios(municipio, ano);
   return res.status(result ? 200 : 204).send(result);
@@ -16,7 +16,7 @@ async function getEstatisticasMunicipios(req: Request, res: Response) {
 
 async function getEstatisticasEstados(req: Request, res: Response) {
   const estado: string = req.params.estado.toString();
-  const ano: string = req.params.ano?.toString();
+  const ano: string | undefined = req.query.year?.toString();
 
   const result = await estatisticasEstados(estado, ano);
   return res.status(result ? 200 : 204).send(result);
