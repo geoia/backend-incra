@@ -41,6 +41,18 @@ export async function estadosComDados() {
   return query.rows;
 }
 
+export async function biomasComDados() {
+  const query = await knex.raw(`
+    select 
+      distinct mb.ref_id as id,
+      mb.bioma as nome
+    from estatisticas_queimadas_biomas est
+    join mapas_biomas mb on mb.ref_id = est.referencia_id
+    order by mb.bioma  
+  `);
+  return query.rows;
+}
+
 export async function estatisticasEstados(
   estado: string,
   ano?: string
@@ -134,9 +146,55 @@ export async function estatisticasMunicipios(
   );
 }
 
+export async function estatisticasBiomas(
+  bioma: string,
+  ano?: string
+): Promise<Array<estatistica_ano>> {
+  const anos = await knex.raw(`
+      select 
+          est.ano,
+          SUM(total_area_queimada) as area_queimada,
+          SUM(total_focos_queimada) as focos,
+          ((SUM(total_area_queimada))/
+          (select ST_AREA(ST_MAKEVALID(mb.wkb_geometry), true) from mapas_biomas mb where mb.ref_id = ${bioma})) * 100 as percentual
+      from estatisticas_queimadas_biomas est
+      where 
+        est.referencia_id = ${bioma}
+        ${ano ? `and ano = ${ano}` : ''} 
+      group by ano
+      order by ano  
+  `);
+
+  return await Promise.all(
+    anos.rows.map(async (row: estatistica_ano) => {
+      const query_meses = await knex.raw(`
+      select 
+        est.mes,
+        est.total_area_queimada as area_queimada,
+        est.total_focos_queimada as focos,
+        (est.total_area_queimada/(select ST_AREA(ST_MAKEVALID(mb.wkb_geometry), true) from mapas_biomas mb where mb.ref_id = ${bioma})) * 100 as percentual
+      from estatisticas_queimadas_biomas est
+      where 
+        est.referencia_id = ${bioma} 
+        and ano = ${row.ano}
+      order by mes  
+  `);
+      return {
+        ano: row.ano,
+        area_queimada: row.area_queimada,
+        focos: row.focos,
+        percentual: row.percentual,
+        meses: query_meses.rows,
+      };
+    })
+  );
+}
+
 export default {
   municipiosComDados,
   estadosComDados,
+  biomasComDados,
   estatisticasMunicipios,
   estatisticasEstados,
+  estatisticasBiomas,
 };
