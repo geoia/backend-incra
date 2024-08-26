@@ -135,6 +135,10 @@ export async function exec() {
            WHERE ST_SRID(wkb_geometry) = 0;`
         );
 
+        await trx.schema
+          .withSchema('public')
+          .raw(`ALTER TABLE public.${data.table} ADD PRIMARY KEY (ogc_fid)`);
+
         await normalizeSRID(`public.${data.table}`, 'wkb_geometry', { transaction: trx });
         await makeValid(`public.${data.table}`, 'wkb_geometry', { transaction: trx });
 

@@ -12,15 +12,15 @@ async function inserir_queimadas(
   year: string
 ) {
   await knex.transaction(async (trx) => {
-    for (let i = 0; i < referencias.length; i++) {
+    for (const ref of referencias) {
       await trx.schema.withSchema('public').raw(`
         insert into ${table}
         SELECT 
           mq.ogc_fid,
-          ${referencias[i]},
+          ${ref},
           ST_AREA(st_intersection(
             mq.wkb_geometry,
-            (select mm.wkb_geometry from mapas_${table_referencia} mm where id = ${referencias[i]})
+            (select mm.wkb_geometry from mapas_${table_referencia} mm where ref_id = ${ref})
           ), true),
           ${month},
           ${year} from mapas_queimadas_${source} mq 
@@ -33,7 +33,7 @@ async function inserir_queimadas(
 export async function estatisticasQueimadas(source: string, tipo: string) {
   const tabela_queimadas = `dados_queimadas_${tipo}`;
 
-  consola.info('PROCESSANDO ESTATISTICAS DE ' + source);
+  consola.info(`PROCESSANDO ESTATISTICAS DE ${source} PARA ${tipo.toLocaleUpperCase()}`);
   const year = source.slice(0, 4);
   const month = Number(source.slice(4, 6));
 
@@ -44,7 +44,6 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
   rows.map((row: { ogc_fid: number }) => ogc_fidSet.add(row.ogc_fid));
 
   while (ogc_fidSet.size > 0) {
-    // consola.info(`PROGRESSO: ${ogc_fidSet.size} restantes`);
     const ogc_iterator = ogc_fidSet.values();
     if (ogc_iterator.next().done) break;
 
@@ -53,7 +52,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
 
     for (const id of ogc_iterator) {
       referencias = await knex.raw(
-        `SELECT id FROM mapas_${tipo} mm WHERE ST_INTERSECTS((select mq.wkb_geometry from mapas_queimadas_${source} mq 
+        `SELECT ref_id as id FROM mapas_${tipo} mm WHERE ST_INTERSECTS((select mq.wkb_geometry from mapas_queimadas_${source} mq 
           where ogc_fid = ${id}), mm.wkb_geometry)`
       );
       ogc_fid = id;
@@ -83,7 +82,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
     const queimadasNoMunicipio = await knex.raw(
       `SELECT mq.ogc_fid from mapas_queimadas_${source} mq 
            WHERE mq.ogc_fid in (${[...ogc_fidSet]}) and
-              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_${tipo} mm where id = ${referencia_id})) `
+              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_${tipo} mm where ref_id = ${referencia_id})) `
     );
 
     consola.info(
@@ -156,7 +155,7 @@ async function createTables(override: boolean, tipo: string) {
               mes smallint,
               ano smallint,
               FOREIGN KEY(referencia_id)
-              REFERENCES mapas_${tipo}(id)
+              REFERENCES mapas_${tipo}(ref_id)
               ON DELETE CASCADE
           )
           `);
@@ -177,7 +176,7 @@ async function createTables(override: boolean, tipo: string) {
               mes smallint,
               ano smallint,
               FOREIGN KEY(referencia_id) 
-              REFERENCES mapas_${tipo}(id)
+              REFERENCES mapas_${tipo}(ref_id)
               ON DELETE CASCADE
           )
           `);
@@ -186,17 +185,16 @@ async function createTables(override: boolean, tipo: string) {
 }
 
 export async function processarEstatisticas(override: boolean) {
-  await Promise.all([
-    // createTables(override, 'biomas'),
-    createTables(override, 'municipios'),
-  ]);
+  await Promise.all([createTables(override, 'biomas'), createTables(override, 'municipios')]);
 
   const sourcesList: Array<{ year: number; month: number }> = await sources();
   const data = Date.now();
 
   await Promise.all(
     sourcesList.map(async (source) => estatisticasQueimadas(String(source), 'municipios'))
-    // estatisticasQueimadas(String(sourcesList[index]), 'biomas'),
+  );
+  await Promise.all(
+    sourcesList.map(async (source) => estatisticasQueimadas(String(source), 'biomas'))
   );
 
   consola.info('Processo finalizado em ' + (Date.now() - data) / 1000 + 's');
