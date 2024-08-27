@@ -9,6 +9,17 @@ const knexConnection = knex({
     password: process.env.PG_PASSWORD || 'geoia',
     database: process.env.PG_DATABASE || 'geoia-db',
   },
+  acquireConnectionTimeout: 1000000,
+  pool: {
+    min: 0,
+    max: 10,
+    acquireTimeoutMillis: 1000000,
+    createTimeoutMillis: 1000000,
+    destroyTimeoutMillis: 1000000,
+    idleTimeoutMillis: 1000000,
+    reapIntervalMillis: 1000000,
+    createRetryIntervalMillis: 2000,
+  },
   searchPath: ['public', 'shapefiles'],
 });
 

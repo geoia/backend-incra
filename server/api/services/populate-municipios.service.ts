@@ -128,12 +128,12 @@ async function populateMapasMunicipios(override?: boolean) {
       `),
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_municipios AS 
-        SELECT cd_mun::integer AS id, nm_mun AS nome, sigla, area_km2, wkb_geometry::geometry(polygon)
+        SELECT cd_mun::integer AS id, nm_mun AS nome, sigla, area_km2, cd_mun::integer AS ref_id, wkb_geometry::geometry(polygon)
         FROM shapefiles.br_municipios_2021
       `),
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_biomas AS 
-        SELECT REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, bioma, wkb_geometry::geometry(polygon) 
+        SELECT REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, bioma, cd_bioma::integer AS ref_id, wkb_geometry::geometry(polygon) 
         FROM shapefiles.lm_bioma_250
       `),
       trx.schema.withSchema('public').raw(`
@@ -154,6 +154,12 @@ async function populateMapasMunicipios(override?: boolean) {
     consola.info('Criando novos indices e chaves...');
     await Promise.all([
       trx.schema.withSchema('public').raw(`ALTER TABLE public.mapas_estados ADD PRIMARY KEY (id)`),
+      trx.schema
+        .withSchema('public')
+        .raw(`ALTER TABLE mapas_municipios ADD constraint municipios_ref_id UNIQUE (ref_id)`),
+      trx.schema
+        .withSchema('public')
+        .raw(`ALTER TABLE mapas_biomas ADD constraint biomas_ref_id UNIQUE (ref_id)`),
       trx.schema
         .withSchema('public')
         .raw(`ALTER TABLE public.mapas_municipios ADD PRIMARY KEY (id)`),

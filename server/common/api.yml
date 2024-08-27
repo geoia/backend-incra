@@ -186,17 +186,28 @@ paths:
         204:
           description: Não existem dados para a consulta
 
-  # /estatisticas/biomas/{id}:
-  #   get:
-  #     tags:
-  #       - Estatisticas
-  #     parameters:
-  #       - $ref: '#/components/parameters/bioma'
-  #     responses:
-  #       200:
-  #         description: Retorna estatisticas de queimadas do bioma
-  #       204:
-  #         description: Não existem dados para a consulta
+  /estatisticas/biomas:
+    get:
+      tags:
+        - Estatisticas
+      responses:
+        200:
+          description: Retorna todos os biomas que possuem dados de queimadas
+        204:
+          description: Não existem dados para a consulta
+
+  /estatisticas/biomas/{id}:
+    get:
+      tags:
+        - Estatisticas
+      parameters:
+        - $ref: '#/components/parameters/bioma_id'
+        - $ref: '#/components/parameters/year'
+      responses:
+        200:
+          description: Retorna estatisticas de queimadas do bioma
+        204:
+          description: Não existem dados para a consulta
 
   /scripts/download-mapas:
     post:
@@ -311,6 +322,13 @@ components:
       schema:
         type: integer
         example: 50
+      required: true
+    bioma_id:
+      in: path
+      name: id
+      schema:
+        type: integer
+        example: 6
       required: true
     bioma:
       in: path
