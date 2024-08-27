@@ -32,10 +32,19 @@ async function inserir_queimadas(
 
 export async function estatisticasQueimadas(source: string, tipo: string) {
   const tabela_queimadas = `dados_queimadas_${tipo}`;
-
-  consola.info(`PROCESSANDO ESTATISTICAS DE ${source} PARA ${tipo.toLocaleUpperCase()}`);
   const year = source.slice(0, 4);
   const month = Number(source.slice(4, 6));
+
+  const foiProcessado = await knex.raw(
+    `SELECT count(*) as count FROM ${tabela_queimadas} WHERE mes = ${month} and ano = ${year}`
+  );
+
+  if (Number(foiProcessado.rows[0].count) > 0) {
+    consola.info(`JÁ PROCESSADO ${source}`);
+    return;
+  }
+
+  consola.info(`PROCESSANDO ESTATISTICAS DE ${source} PARA ${tipo.toLocaleUpperCase()}`);
 
   const { rows } = await knex.raw(
     `select mq.ogc_fid from mapas_queimadas_${source} mq where ST_INTERSECTS(mq.wkb_geometry, (select mb.wkb_geometry from mapa_brasil mb LIMIT 1))`
