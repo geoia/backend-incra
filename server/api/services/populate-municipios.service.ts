@@ -123,7 +123,7 @@ async function populateMapasMunicipios(override?: boolean) {
     await Promise.all([
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_estados AS 
-        SELECT cd_uf::integer AS id, nm_uf AS nome, sigla, nm_regiao AS regiao, wkb_geometry::geometry(polygon)
+        SELECT cd_uf::integer AS id, nm_uf AS nome, sigla, nm_regiao AS regiao, cd_uf::integer AS ref_id, wkb_geometry::geometry(polygon)
         FROM shapefiles.br_uf_2021
       `),
       trx.schema.withSchema('public').raw(`
