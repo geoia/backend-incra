@@ -123,17 +123,34 @@ async function populateMapasMunicipios(override?: boolean) {
     await Promise.all([
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_estados AS 
-        SELECT cd_uf::integer AS id, nm_uf AS nome, sigla, nm_regiao AS regiao, cd_uf::integer AS ref_id, wkb_geometry::geometry(polygon)
+        SELECT 
+          cd_uf::integer AS id, 
+          nm_uf AS nome, 
+          sigla, 
+          nm_regiao AS regiao, 
+          ST_AREA(ST_MAKEVALID(wkb_geometry::geometry), true) as area_m2,
+          cd_uf::integer AS ref_id, wkb_geometry::geometry(polygon)
         FROM shapefiles.br_uf_2021
       `),
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_municipios AS 
-        SELECT cd_mun::integer AS id, nm_mun AS nome, sigla, area_km2, cd_mun::integer AS ref_id, wkb_geometry::geometry(polygon)
+        SELECT 
+          cd_mun::integer AS id, 
+          nm_mun AS nome, sigla, 
+          area_km2 * 1e6 as area_m2, 
+          cd_mun::integer AS ref_id, 
+          wkb_geometry::geometry(polygon)
         FROM shapefiles.br_municipios_2021
       `),
       trx.schema.withSchema('public').raw(`
         CREATE TABLE public.mapas_biomas AS 
-        SELECT REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, bioma, cd_bioma::integer AS ref_id, wkb_geometry::geometry(polygon) 
+        SELECT 
+          REPLACE(LOWER(UNACCENT(bioma)), ' ', '_') AS id, 
+          bioma, 
+          bioma as nome,
+          cd_bioma::integer AS ref_id, 
+          ST_AREA(ST_MAKEVALID(wkb_geometry::geometry), true) as area_m2,
+          wkb_geometry::geometry(polygon) 
         FROM shapefiles.lm_bioma_250
       `),
       trx.schema.withSchema('public').raw(`
