@@ -30,8 +30,8 @@ async function inserir_queimadas(
   });
 }
 
-export async function estatisticasQueimadas(source: string, tipo: string) {
-  const tabela_queimadas = `dados_queimadas_${tipo}`;
+export async function estatisticasQueimadas(source: string, mapa: string) {
+  const tabela_queimadas = `dados_queimadas_${mapa}`;
   const year = source.slice(0, 4);
   const month = Number(source.slice(4, 6));
 
@@ -44,7 +44,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
     return;
   }
 
-  consola.info(`PROCESSANDO ESTATISTICAS DE ${source} PARA ${tipo.toLocaleUpperCase()}`);
+  consola.info(`PROCESSANDO ESTATISTICAS DE ${source} PARA ${mapa.toLocaleUpperCase()}`);
 
   const { rows } = await knex.raw(
     `select mq.ogc_fid from mapas_queimadas_${source} mq where ST_INTERSECTS(mq.wkb_geometry, (select mb.wkb_geometry from mapa_brasil mb LIMIT 1))`
@@ -61,7 +61,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
 
     for (const id of ogc_iterator) {
       referencias = await knex.raw(
-        `SELECT ref_id as id FROM mapas_${tipo} mm WHERE ST_INTERSECTS((select mq.wkb_geometry from mapas_queimadas_${source} mq 
+        `SELECT ref_id as id FROM mapas_${mapa} mm WHERE ST_INTERSECTS((select mq.wkb_geometry from mapas_queimadas_${source} mq 
           where ogc_fid = ${id}), mm.wkb_geometry)`
       );
       ogc_fid = id;
@@ -81,7 +81,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
         [ogc_fid],
         referencias.rows.map((row: { id: number }) => row.id),
         tabela_queimadas,
-        tipo,
+        mapa,
         source,
         month.toString(),
         year
@@ -91,7 +91,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
     const queimadasNoMunicipio = await knex.raw(
       `SELECT mq.ogc_fid from mapas_queimadas_${source} mq 
            WHERE mq.ogc_fid in (${[...ogc_fidSet]}) and
-              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_${tipo} mm where ref_id = ${referencia_id})) `
+              ST_INTERSECTS(mq.wkb_geometry, (select mm.wkb_geometry FROM mapas_${mapa} mm where ref_id = ${referencia_id})) `
     );
 
     consola.info(
@@ -104,7 +104,7 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
       queimadasNoMunicipio.rows.map((row: { ogc_fid: number }) => row.ogc_fid),
       [referencia_id],
       tabela_queimadas,
-      tipo,
+      mapa,
       source,
       month.toString(),
       year
@@ -118,44 +118,17 @@ export async function estatisticasQueimadas(source: string, tipo: string) {
   consola.info(`PROCESSAMENTO FINALIZADO PARA ${source}`);
 }
 
-async function createTables(override: boolean, tipo: string) {
-  const tabela_queimadas = `dados_queimadas_${tipo}`;
-  const tabela_estatisticas = `estatisticas_queimadas_${tipo}`;
-
+async function criarTabelaDadosQueimadas(override: boolean, mapa: string) {
+  const tabela_queimadas = `dados_queimadas_${mapa}`;
   const hasDadosTable = await knex.schema.withSchema('public').hasTable(tabela_queimadas);
-  const hasEstatisticasTable = await knex.schema.withSchema('public').hasTable(tabela_estatisticas);
 
   await knex.transaction(async (trx) => {
     if (override) {
       consola.info('Deletando dados antigos...');
       if (hasDadosTable) await trx.schema.withSchema('public').dropTableIfExists(tabela_queimadas);
-      if (hasEstatisticasTable)
-        await trx.schema.withSchema('public').dropTableIfExists(tabela_estatisticas);
     }
 
-    await trx.schema.withSchema('public').raw(`
-        create or replace function adicionar_estatistica_${tipo}() returns trigger as $$
-        declare 
-          existe integer;
-        begin
-          select count(*) INTO existe from ${tabela_estatisticas} dd
-          where dd.mes = NEW.mes and dd.ano = NEW.ano and dd.referencia_id = NEW.referencia_id;
-          IF existe != 0 THEN
-                  update ${tabela_estatisticas} set 
-                  total_area_queimada = total_area_queimada + new.area_queimada,
-                  total_focos_queimada = total_focos_queimada + 1
-                  where mes = NEW.mes and ano = NEW.ano and referencia_id = NEW.referencia_id;
-              else
-                insert into ${tabela_estatisticas}
-                (referencia_id, total_area_queimada, total_focos_queimada, mes, ano) values
-                (new.referencia_id, new.area_queimada, 1, new.mes, new.ano);
-              END IF;
-          return new;
-        end;
-      $$ language PLPGSQL;
-    `);
-
-    if (!hasDadosTable || override) {
+    if (!hasDadosTable || override)
       await trx.schema.withSchema('public').raw(`
           create table ${tabela_queimadas}(
               queimada_id int4 null,
@@ -164,47 +137,74 @@ async function createTables(override: boolean, tipo: string) {
               mes smallint,
               ano smallint,
               FOREIGN KEY(referencia_id)
-              REFERENCES mapas_${tipo}(ref_id)
+              REFERENCES mapas_${mapa}(ref_id)
               ON DELETE CASCADE
           )
           `);
-      await trx.schema.withSchema('public').raw(`
-          CREATE TRIGGER add_estatistica AFTER INSERT
-          ON public.${tabela_queimadas}
-          FOR EACH ROW
-            execute FUNCTION adicionar_estatistica_${tipo}()
-          `);
-    }
+  });
+}
 
-    if (!hasEstatisticasTable || override) {
-      await trx.schema.withSchema('public').raw(`
-          create table ${tabela_estatisticas}(
-              referencia_id int4 null,
-              total_area_queimada DOUBLE PRECISION,
-              total_focos_queimada bigint,
-              mes smallint,
-              ano smallint,
-              FOREIGN KEY(referencia_id) 
-              REFERENCES mapas_${tipo}(ref_id)
-              ON DELETE CASCADE
-          )
-          `);
-    }
+async function criarTabelaDadosQueimadasEstados() {
+  await knex.transaction(async (trx) => {
+    await trx.schema.withSchema('public').dropTableIfExists('dados_queimadas_estados');
+    await trx.schema.withSchema('public').raw(`
+        CREATE TABLE dados_queimadas_estados AS
+        SELECT  
+          queimada_id, 
+          mm.uf_id as referencia_id,
+          area_queimada,
+          mes,
+          ano
+        FROM dados_queimadas_municipios dq
+        JOIN dados_municipios mm ON mm.id = dq.referencia_id 
+      `);
+  });
+}
+
+async function criarTabelaEstatisticas(mapa: string) {
+  await knex.transaction(async (trx) => {
+    await trx.schema
+      .withSchema('public')
+      .raw(`DROP TABLE IF EXISTS estatisticas_queimadas_${mapa}`);
+    await trx.schema.withSchema('public').raw(`
+        CREATE TABLE estatisticas_queimadas_${mapa} AS
+        SELECT 
+            referencia_id, 
+            SUM(area_queimada) AS total_area_queimada,
+            COUNT(*) AS total_focos_queimada,
+            ano, 
+            mes 
+        FROM dados_queimadas_${mapa}
+        GROUP BY ano, mes, referencia_id
+      `);
   });
 }
 
 export async function processarEstatisticas(override: boolean) {
-  await Promise.all([createTables(override, 'biomas'), createTables(override, 'municipios')]);
+  await Promise.all([
+    criarTabelaDadosQueimadas(override, 'biomas'),
+    criarTabelaDadosQueimadas(override, 'municipios'),
+  ]);
 
   const sourcesList: Array<{ year: number; month: number }> = await sources();
   const data = Date.now();
 
-  await Promise.all(
-    sourcesList.map(async (source) => estatisticasQueimadas(String(source), 'municipios'))
-  );
-  await Promise.all(
-    sourcesList.map(async (source) => estatisticasQueimadas(String(source), 'biomas'))
-  );
+  const promises: Array<Promise<void>> = [];
+
+  sourcesList.forEach((source) => {
+    promises.push(estatisticasQueimadas(String(source), 'municipios'));
+    promises.push(estatisticasQueimadas(String(source), 'biomas'));
+  });
+
+  await Promise.all(promises);
+
+  await criarTabelaDadosQueimadasEstados();
+
+  await Promise.all([
+    criarTabelaEstatisticas('biomas'),
+    criarTabelaEstatisticas('municipios'),
+    criarTabelaEstatisticas('estados'),
+  ]);
 
   consola.info('Processo finalizado em ' + (Date.now() - data) / 1000 + 's');
 }
