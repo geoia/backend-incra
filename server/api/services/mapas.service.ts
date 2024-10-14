@@ -1,6 +1,7 @@
 import L from '../../common/logger';
 import knex from '../../common/knex';
 import formatter from '../../common/utils/formatter';
+import { formatSource, latestSource } from './queimadas.service';
 
 type HandlerOpts = { municipio?: number; estado?: number; bioma?: string } & (
   | { municipio: number }
@@ -12,15 +13,18 @@ export async function entidadesComDados(
   type: 'mapas_municipios' | 'mapas_estados' | 'mapas_biomas',
   opts: { source?: string; full?: boolean }
 ) {
-  const tableQueimadas = `mapas_queimadas${opts.source ? `_${opts.source}` : ''}`;
   const joinMode = opts.full ? 'LEFT' : 'INNER';
+  const typeDadosQueimadas = type.split('_')[1];
+  const source = opts.source ? formatSource(opts.source) : await latestSource();
   const { rowCount, rows } = await knex.raw(
     `
-    WITH queimadas AS (SELECT ST_Union(ST_Simplify(mq.wkb_geometry, 0.1, TRUE)) AS wkb_geometry FROM ${tableQueimadas} mq)
-    SELECT DISTINCT ma.id, ${
-      type !== 'mapas_biomas' ? 'ma.nome, ma.sigla, ' : 'ma.bioma,'
-    } (mq.wkb_geometry IS NOT NULL) as queimadas 
-      FROM ${type} ma ${joinMode} JOIN queimadas mq ON ST_Intersects(ST_Simplify(ma.wkb_geometry, 0.1, TRUE), mq.wkb_geometry)
+      select 
+        distinct ma.id,
+        ${type !== 'mapas_biomas' ? 'ma.nome, ma.sigla ' : 'ma.bioma'}
+      from ${type} ma
+      ${joinMode} join dados_queimadas_${typeDadosQueimadas} dq on dq.referencia_id = ma.ref_id
+      where dq.ano = ${source.year} and dq.mes = ${source.month}
+      ORDER BY ${type !== 'mapas_biomas' ? 'ma.sigla, ma.nome' : 'ma.bioma'}
     `
   );
 
@@ -54,4 +58,4 @@ export async function mapas(opts: HandlerOpts) {
   return JSON.parse(rows[0].geojson);
 }
 
-export default { mapas, entFederais: entidadesComDados };
+export default { mapas, entFederais: entidadesComDados, formatSource };

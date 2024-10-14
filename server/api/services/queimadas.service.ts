@@ -30,22 +30,38 @@ export async function count(opts: LocaleOpts) {
   const id = municipio || estado || `'${bioma}'`;
 
   L.debug('Obtendo contagem de queimadas usando "%s"...', formatter.object({ mapa, id }));
+  const source = opts.source ? formatSource(opts.source) : await latestSource();
+
   const { rows } = await knex.raw(
     `
     SELECT COUNT(m.fid) AS count FROM mapas_queimadas${opts.source ? `_${opts.source}` : ''} m
-    WHERE ST_Within(m.wkb_geometry, (SELECT map.wkb_geometry FROM ${mapa} map WHERE map.id = ${id}))
+    JOIN dados_queimadas_${type}s dqm on dqm.queimada_id = m.ogc_fid
+    WHERE dqm.referencia_id = ${id} and dqm.ano = ${source.year} and dqm.mes = ${source.month}
     `
   );
-
   return rows.at(0).count as number;
 }
 
 export async function sources(): Promise<Array<{ year: number; month: number }>> {
   const { rows } = await knex.raw(`
-    SELECT prefix FROM mapas_queimadas_historico
+    SELECT prefix FROM mapas_queimadas_historico order by "year" , "month" 
   `);
 
   return rows.map((row: { prefix: string }) => row.prefix);
+}
+
+export function formatSource(source: string): {
+  year: string;
+  month: string;
+} {
+  return { year: source?.slice(0, 4), month: source?.slice(4) };
+}
+
+export async function latestSource(): Promise<{ year: number; month: number }> {
+  const { rows } = await knex.raw(
+    `SELECT h.year , h.month FROM mapas_queimadas_historico h order by h.year DESC, h.month desc limit 1`
+  );
+  return rows[0];
 }
 
 function ensureValue(value: number | undefined, min: number, max?: number) {
@@ -78,13 +94,15 @@ export async function queimadas(opts: HandlerOpts) {
     formatter.object({ mapa, id, detailed, page, table })
   );
   const simplifyFn = (text: string) => (detailed ? text : `ST_SimplifyVW(${text}, 1e-7)`);
+  const source = opts.source ? formatSource(opts.source) : await latestSource();
 
   const { rowCount, rows } = await knex.raw(
     `
     SELECT ST_AsGeoJSON(ST_CollectionHomogenize(ST_Collect(${simplifyFn('sm.geom')})), 6) AS geojson
     FROM (
-      SELECT m.wkb_geometry AS geom FROM ${table} m
-      WHERE ST_Within(m.wkb_geometry, (SELECT map.wkb_geometry FROM ${mapa} map WHERE map.id = ${id}))
+      SELECT m.wkb_geometry AS geom FROM mapas_queimadas_${opts.source} m
+      join dados_queimadas_${type}s dqm on dqm.queimada_id = m.ogc_fid
+      WHERE dqm.referencia_id = ${id} and dqm.ano = ${source.year} and dqm.mes = ${source.month}
       ORDER BY m.fid ASC
       LIMIT ${limit}
       OFFSET ${(page - 1) * limit}
