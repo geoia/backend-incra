@@ -6,6 +6,8 @@ info:
 servers:
   - url: /api
 tags:
+  - name: Assentamentos
+    description: API para consulta de assentamentos
   - name: Mapas
     description: API para consulta de mapas
   - name: Queimadas
@@ -49,6 +51,28 @@ paths:
         200:
           description: Retorna mapa do bioma no formato GeoJson
         404:
+          description: Não existem dados para a consulta
+
+  /assentamentos:
+    get:
+      tags:
+        - Assentamentos
+      responses:
+        200:
+          description: Retorna a lista assentamentoss
+        204:
+          description: Não existem dados para a consulta
+
+  /assentamentos/{id}:
+    get:
+      tags:
+        - Assentamentos
+      parameters:
+        - $ref: '#/components/parameters/assentamento_id'
+      responses:
+        200:
+          description: Retorna a lista assentamentoss
+        204:
           description: Não existem dados para a consulta
 
   /queimadas/sources:
@@ -209,6 +233,20 @@ paths:
         204:
           description: Não existem dados para a consulta
 
+  /scripts/assentamentos:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Scripts
+      parameters:
+        - $ref: '#/components/parameters/override'
+      responses:
+        202:
+          description: Script foi iniciado de forma assincrona
+        401:
+          description: Credenciais inválidas ou não fornecidas.
+
   /scripts/download-mapas:
     post:
       security:
@@ -281,6 +319,7 @@ paths:
           description: Prefixo não foi enviado ou não está cadastrado
         401:
           description: Credenciais inválidas ou não fornecidas.
+
   /scripts/estatisticas:
     post:
       security:
@@ -315,6 +354,13 @@ components:
       schema:
         type: integer
         example: 5003207
+      required: true
+    assentamento_id:
+      in: path
+      name: id
+      schema:
+        type: integer
+        example: 1
       required: true
     estado_id:
       in: path
