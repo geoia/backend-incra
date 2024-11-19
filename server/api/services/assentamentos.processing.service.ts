@@ -21,10 +21,10 @@ export async function processShapefiles(override?: boolean) {
 
   consola.info('Carregando shapefiles do ibge no banco de dados...');
   await Promise.all([
-    ogr2ogr('assentamentos', { type: 'POLYGON' }),
-    ogr2ogr('lotes', { type: 'POLYGON' }),
-    ogr2ogr('fotos', { type: 'POINT' }),
-    ogr2ogr('pontos', { type: 'POINT' }),
+    ogr2ogr('assentamentos', { table: 'assentamentos', type: 'POLYGON' }),
+    ogr2ogr('lotes', { table: 'lotes', type: 'POLYGON' }),
+    ogr2ogr('fotos', { table: 'fotos', type: 'POINT' }),
+    ogr2ogr('pontos', { table: 'pontos', type: 'POINT' }),
   ]);
 
   await knex.transaction(async (trx) => {
