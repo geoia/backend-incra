@@ -31,9 +31,7 @@ export async function processShapefiles(override?: boolean) {
     consola.info('Removendo dados antigos...');
 
     await Promise.all(
-      mapas.map(async (mapa) => {
-        return trx.schema.withSchema('public').raw(`DROP TABLE ${mapa} CASCADE`);
-      })
+      mapas.map(async (mapa) => trx.schema.withSchema('public').dropTableIfExists(mapa))
     );
 
     consola.info('Copiando dados das tabelas...');
