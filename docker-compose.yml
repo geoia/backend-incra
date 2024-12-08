@@ -30,6 +30,7 @@ services:
       - ${PORT:-3001}:80
     volumes:
       - ./shapefiles:/usr/src/app/shapefiles
+      - ./public/fotos:/usr/src/app/public/fotos
     depends_on:
       - postgis
 
