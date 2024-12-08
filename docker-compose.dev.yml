@@ -7,18 +7,18 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - ${PG_PORT:-}:5432
+      - ${PG_PORT:-5432}:5432
     environment:
       POSTGRES_PASSWORD: ${PG_PASSWORD:-geoia}
       POSTGRES_USER: ${PG_USER:-geoia}
       POSTGRES_DB: ${PG_DATABASE:-geoia-db}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-dev:/var/lib/postgresql/data
 
-  backend:
+  backend.dev:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     restart: unless-stopped
     environment:
       PG_HOST: postgis
@@ -27,10 +27,9 @@ services:
       PG_USER: ${PG_USER:-geoia}
       PG_DATABASE: ${PG_DATABASE:-geoia-db}
     ports:
-      - ${PORT:-}:80
+      - ${PORT:-3001}:80
     volumes:
-      - ./shapefiles:/usr/src/app/shapefiles
-      - ./public/fotos:/usr/src/app/public/fotos
+      - ./:/usr/src/app
     depends_on:
       - postgis
 
