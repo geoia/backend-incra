@@ -14,6 +14,8 @@ tags:
     description: API para consulta de estatisticas de queimadas
   - name: Scripts
     description: API para executar scripts que preparam o ambiente.
+  - name: Uploads
+    description: API que permite o envio de arquivos para processamento.
   - name: Specification
     description: The swagger API specification
 paths:
@@ -256,6 +258,111 @@ paths:
           description: Arquivo não foi enviado ou algum diretório não segue o padrão de nome definido
         500:
           description: Erro ao descompactar o arquivo!
+  /uploads/shapefiles/assentamentos:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Uploads
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/zipShapefile'
+      responses:
+        201:
+          description: Arquivo foi salvo e descompactado com sucesso!
+        401:
+          description: Credenciais inválidas ou não fornecidas.
+        400:
+          description: Arquivo não foi enviado ou é um formato não permitido.
+        500:
+          description: Erro ao descompactar o arquivo!
+  /uploads/shapefiles/lotes:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Uploads
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/zipShapefile'
+      responses:
+        201:
+          description: Arquivo foi salvo e descompactado com sucesso!
+        401:
+          description: Credenciais inválidas ou não fornecidas.
+        400:
+          description: Arquivo não foi enviado ou é um formato não permitido.
+        500:
+          description: Erro ao descompactar o arquivo!
+  /uploads/shapefiles/fotos:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Uploads
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/zipShapefile'
+      responses:
+        201:
+          description: Arquivo foi salvo e descompactado com sucesso!
+        401:
+          description: Credenciais inválidas ou não fornecidas.
+        400:
+          description: Arquivo não foi enviado ou é um formato não permitido.
+        500:
+          description: Erro ao descompactar o arquivo!
+  /uploads/shapefiles/pontos:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Uploads
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/zipShapefile'
+      responses:
+        201:
+          description: Arquivo foi salvo e descompactado com sucesso!
+        401:
+          description: Credenciais inválidas ou não fornecidas.
+        400:
+          description: Arquivo não foi enviado ou é um formato não permitido.
+        500:
+          description: Erro ao descompactar o arquivo!
+  /uploads/fotos:
+    post:
+      security:
+        - BasicAuth: []
+      tags:
+        - Uploads
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/zipFotos'
+      responses:
+        201:
+          description: Arquivo foi salvo e descompactado com sucesso!
+        401:
+          description: Credenciais inválidas ou não fornecidas.
+        400:
+          description: Arquivo não foi enviado ou é um formato não permitido.
+        500:
+          description: Erro ao descompactar o arquivo!
   /scripts/queimadas:
     post:
       security:
@@ -344,6 +451,18 @@ components:
           - pampa
           - pantanal
       required: true
+    tipoShapefile:
+      in: path
+      name: tipo
+      schema:
+        type: string
+        example: pantanal
+        enum:
+          - assentamentos
+          - fotos
+          - lotes
+          - pontos
+      required: true
     per_page:
       in: query
       name: per_page
@@ -408,3 +527,17 @@ components:
           type: string
           format: binary
           description: Arquivo zip contendo os shapefiles separados por pastas no formato YYYYMM
+    zipShapefile:
+      type: object
+      properties:
+        zipfile:
+          type: string
+          format: binary
+          description: Arquivo zip contendo todos os arquivos relacionados ao shapefile
+    zipFotos:
+      type: object
+      properties:
+        zipfile:
+          type: string
+          format: binary
+          description: Arquivo zip contendo as fotos no formato jpg

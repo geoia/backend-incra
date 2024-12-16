@@ -42,7 +42,7 @@ export default class ExpressServer {
         apiSpec,
         validateResponses,
         // ignorePaths: /.*\/spec(\/|$)/,
-        ignorePaths: (path: string) => path.endsWith('/spec') || path.endsWith('/upload'),
+        ignorePaths: (path: string) => path.endsWith('/spec') || path.includes('upload'),
       })
     );
   }
